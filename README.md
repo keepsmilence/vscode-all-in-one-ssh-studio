@@ -1,293 +1,295 @@
 # All in One SSH Studio
 
-VS Code 内的一站式 SSH 客户端：连接管理、SFTP 浏览、远程编辑、系统/网络/进程监控、端口转发，以及通过 **VS Code 原生 `languageModelTools`** 与 GitHub Copilot Chat 集成。
+[English](README.md) | [简体中文](README_zh.md)
 
-> 不向远端推送任何 binary、不上报任何遥测、不在 `~/.ssh` 写文件。所有破坏性操作均强制二次确认。
+An all-in-one SSH client inside VS Code: connection management, SFTP browsing, remote editing, system/network/process monitoring, port forwarding, plus native integration with GitHub Copilot Chat.
 
----
-
-## 30 秒上手
-
-1. 左侧活动栏点击 **All in One SSH Studio** 图标 → 「连接」面板 → 标题栏 **＋** 新建连接。
-2. 填写主机 / 端口 / 用户名 / 认证（密码 · 私钥 · SSH Agent），点 **「测试连接」** 验证（不会写任何配置）。
-3. 通过后保存并连接；连接成功后右侧的「仪表盘」与「工具集」自动可用。
-
-跳板机场景：先把已在白名单内的主机配为普通连接，然后在目标连接「高级 → 跳板机（ProxyJump）」下拉里选中它。支持多级嵌套（A→B→C）。
+> No binaries are pushed to the remote host, no telemetry is reported, and nothing is written to `~/.ssh`. All destructive operations always require a second confirmation.
 
 ---
 
-## 视图与入口
+## Get Started in 30 Seconds
 
-打开活动栏 **All in One SSH Studio** 后能看到 5 个面板：
+1. Click the **All in One SSH Studio** icon in the Activity Bar on the left → open the **Connections** panel → click **＋** in the title bar to create a new connection.
+2. Fill in host / port / username / authentication (password · private key · SSH Agent), then click **Test Connection** to validate it (this does not write any configuration).
+3. After validation succeeds, save and connect. Once connected, the **Dashboard** and **Toolbox** on the right become available automatically.
 
-| 面板 | 用途 |
-|---|---|
-| **连接** | 支持多级分组，新建 / 编辑 / 连接 / 断开；连接配置数据支持导入导出；右键菜单的「断开」带二次确认 |
-| **活动会话** | 当前活动会话，支持断开连接（带二次确认） / 新建SSH终端 / 打开SFTP游览器 |
-| **仪表盘** | 单面板内分块展示「CPU / 内存 / 网络 / 磁盘 / 系统信息」；CPU 与内存独立分块带 5 分钟 mini sparkline 走势；进度条按阈值（warn ≥75% / crit ≥90%）变色 |
-| **工具集** | 卡片式聚合入口，按下面两大类组织所有功能面板（活动会话相关） |
-| **插件管理** | 全局工具入口，与会话生命周期解耦：插件使用说明 / 待办任务管理 / 操作审计日志 |
-
-### 工具集 · 资源管理
-
-| 卡片 | 说明 |
-|---|---|
-| **SFTP 游览器** | 浏览 / 上传 / 下载 / 改名 / 删除；支持从 VS Code 资源管理器多选并拖入当前远端目录；多选（Ctrl/Cmd 切换、Shift 范围）+ 右键批量删除 / 批量下载；删除二次确认 + 父目录写权限检查；批量同名一次性决策（全覆盖 / 全跳过 / 全保留两者 / 逐个询问）；**右键菜单**（进入目录 / 在终端中打开 / 复制路径）；`rss.sftp.writeConfirm` 可开启在线文件保存前二次确认 |
-| **命令片段** | 全局 / 按连接绑定的命令模板；卡片网格视图 + 弹窗详情 / 编辑；展示全局与当前连接的片段；操作：查看详情 / 编辑 / 复制 / 填入终端 / 填入并执行 / 重置使用计数 / 删除；危险命令受白名单拦截 |
-| **端口转发** | local→remote / remote→local 两种模式；表格展示状态 / 当前并发 / 上下行字节累计；端口冲突自动探测；查源端口对应远端进程 |
-| **日志查看** | 收藏远端日志路径（支持模板变量如日期）；**实时模式**（tail -F，ring-buffer，可暂停 / 继续 / 清空）与 **分页模式**（字节偏移翻页，大文件无需全文扫描）；关键词搜索（grep -bnF）+ n/N 跳转；前端语法着色（时间戳 / 日志级别 / JSON Key / IP / URL）；多标签页 |
-| **传输队列** | 文件上下载进度查看、暂停、重试；面板已打开时新上传任务在后台刷新，不抢占 SFTP 标签页；连接断开时该连接的排队任务立即取消，运行中任务在下一检查点自动终止 |
-| **待办任务** | 全局运维事项备忘清单；待办内容：标题 / 备注 / 优先级 / 截止时间 / 标签 / 关联连接；支持状态过滤、批量清理 |
-
-### 工具集 · 系统管理
-
-| 卡片 | 说明 |
-|---|---|
-| **进程管理** | 列表 + 排序指示 + 过滤 + 4 Tab 详情（概要 / 环境变量 / 文件描述符 / 内核堆栈）；详情面板可拖动调高；支持 KILL 进程 |
-| **端口监控** | 监听端口 + ESTABLISHED 双面板，可拖拽调整布局；列可排序、双击打开 GeoIP 详情 |
-| **命令历史** | 汇总当前用户的 shell / REPL 历史（bash / zsh / fish / sh / python / node / mysql / psql / sqlite / redis），按时间倒序；每行可一键复制或发送到当前终端 |
-| **服务管理** | systemd 服务列表（服务名 / 状态 / 开机启动）；行点击下方 tail journal；启动 / 停止 / 重启 / 启用 / 禁用含确认 |
-| **计划任务** | 三 Tab：cron（含 `/etc/crontab` + `cron.d` + 各用户 crontab）、systemd timers、at queue；行点击展示触发的 service / unit 文件 / cron 字段解析 |
-| **安全审计** | 四 Tab：当前在线（who/w）、登录历史（last）、失败尝试（lastb）、sshd 失败日志（auth.log/journalctl） |
-| **软件与环境** | 四 Tab：已安装包（带搜索）、仓库源（apt/yum/apk/pacman）、环境变量、PATH 命令（按需扫描） |
-| **容器管理** | docker / podman 一致 API；列出全量容器（含已停止）+ 端口映射；详情展示 state/ports/mounts/networks/env；一键复制完整容器 ID、把挂载主机目录直接在 SFTP 中打开；Start/Stop/Restart 与 logs tail 200；兼容 podman 模拟 docker CLI 的提示输出 |
-| **防火墙管理** | **概览**：检测并展示 iptables / ip6tables / nftables / ufw / firewalld / Fail2Ban 安装与运行状态；service 开启停止控制。**iptables / ip6tables**：table（filter/nat/mangle/raw）与 chain 切换；规则表格；高风险（全段 ACCEPT）红色 / 中风险橙色高亮。**nftables**：ruleset 原始输出带风险高亮。**ufw**：编号规则表 + 添加 / 删除规则 + 开启关闭。**firewalld**：zone 列表 + 服务控制 + permanent 重载。**Fail2Ban**：jail 状态 + 封禁 IP 列表 + 一键解禁 |
-| **资源告警** | 后台轮询 CPU / 内存 / 磁盘 / 负载 / Swap，持续超阈时右下角通知（默认关闭，开启见 `rss.alerts.enabled`）；三层抑制：连续触发次数 · 冷却时间 · 当日不再提醒；通知附带「查看仪表盘」快捷按钮 |
-| **依赖检查** | 一键体检远端 ss/netstat/procps/iproute2 等 9 类必备工具，按发行版给出安装命令 |
-
-### 工具集 · 插件管理
-
-> 已迁移：插件管理已从「工具集」独立为侧边栏顶级面板，详见下方「插件管理」面板。
-
-### 插件管理（独立侧边栏面板）
-
-| 卡片 | 说明 |
-|---|---|
-| **插件使用说明** | 查看插件的使用说明和功能介绍（即欢迎页） |
-| **操作审计日志** | JSONL 持久化每次终端 / 面板 / Copilot 工具调用；4+1 标签页（全部 / 终端 / 面板 / Copilot / 错误）；支持按日期 / 连接 / 关键词过滤；支持实时模式、导出、清空；保留天数可配置 |
+For jump-host scenarios: first configure the already-whitelisted host as a normal connection, then select it from the target connection's **Advanced → Jump Host (ProxyJump)** dropdown. Multi-hop nesting is supported (A→B→C).
 
 ---
 
-## SSH 终端
+## Views and Entry Points
 
-集成 xterm；终端中 `cd` 后通过 OSC 7 自动同步 SFTP 资源管理器目录（可在设置中关闭）。
+After opening **All in One SSH Studio** in the Activity Bar, you will see 5 panels:
 
-## 自动账号切换（连接级）
+| Panel | Purpose |
+|---|---|
+| **Connections** | Supports multi-level grouping, create / edit / connect / disconnect; connection configuration data can be imported and exported; the **Disconnect** item in the context menu requires confirmation |
+| **Active Sessions** | Current active sessions, with support for disconnecting (with confirmation) / creating a new SSH terminal / opening the SFTP browser |
+| **Dashboard** | Displays **CPU / Memory / Network / Disk / System Info** in sections inside a single panel; CPU and memory each have independent sections with 5-minute mini sparkline trends; progress bars change color by threshold (warn ≥75% / crit ≥90%) |
+| **Toolbox** | Card-style unified entry point that organizes all feature panels below into two major groups (related to active sessions) |
+| **Plugin Management** | Global tools entry point, decoupled from the session lifecycle: plugin usage guide / to-do management / operation audit log |
 
-在连接编辑器中开启 sudo / su 切换：交互终端启动后注入 `sudo -i -u` 或 `su - user`；exec 通道使用 `printf base64 | base64 -d | sudo -n -H -u 'user' bash -s` 包装，无 shell 注入风险；所有 Copilot 工具调用同样走升权通道。
+### Toolbox · Resource Management
 
-## 远端编辑
+| Card | Description |
+|---|---|
+| **SFTP Browser** | Browse / upload / download / rename / delete; supports multi-select from the VS Code Explorer and drag into the current remote directory; multi-select (`Ctrl/Cmd` toggle, `Shift` range) + right-click bulk delete / bulk download; delete confirmation + parent directory write-permission check; one-time decision for same-name conflicts in bulk operations (overwrite all / skip all / keep both for all / ask one by one); **right-click menu** (Enter Directory / Open in Terminal / Copy Path); `rss.sftp.writeConfirm` can enable a confirmation before saving online files |
+| **Command Snippets** | Global and connection-bound command templates; card-grid view + modal details / editing; shows global snippets and snippets for the current connection; actions: view details / edit / copy / fill into terminal / fill and execute / reset usage count / delete; dangerous commands are blocked by the whitelist |
+| **Port Forwarding** | Supports both local→remote and remote→local modes; table shows status / current concurrency / cumulative upstream and downstream bytes; port conflicts are detected automatically; can inspect the remote process corresponding to the source port |
+| **Log Viewer** | Bookmark remote log paths (supports template variables such as dates); **Realtime Mode** (`tail -F`, ring buffer, can pause / resume / clear) and **Paged Mode** (page by byte offset, no full-file scan required for large files); keyword search (`grep -bnF`) + `n/N` navigation; frontend syntax highlighting (timestamp / log level / JSON key / IP / URL); multi-tab support |
+| **Transfer Queue** | View file upload/download progress, pause, and retry; when the panel is already open, new upload tasks refresh in the background without stealing focus from the SFTP tab; when the connection disconnects, queued tasks for that connection are canceled immediately, and running tasks stop automatically at the next checkpoint |
+| **To-Do Tasks** | Global operations checklist for ops work; each item includes title / notes / priority / due time / tags / associated connection; supports status filtering and batch cleanup |
 
-双击远端文件下载到本地缓存，保存自动回写。缓存路径可在 `rss.editor.tempDir` 设置；留空则使用扩展存储下的 `cache/`。
+### Toolbox · System Management
+
+| Card | Description |
+|---|---|
+| **Process Management** | List + sort indicators + filtering + 4 detail tabs (Summary / Environment Variables / File Descriptors / Kernel Stack); the details panel can be dragged taller; supports killing processes |
+| **Port Monitor** | Dual-pane layout for listening ports and ESTABLISHED connections, with draggable resizing; columns are sortable, and double-click opens GeoIP details |
+| **Command History** | Aggregates shell / REPL history for the current user (bash / zsh / fish / sh / python / node / mysql / psql / sqlite / redis), sorted by time descending; each row can be copied with one click or sent to the current terminal |
+| **Service Management** | systemd service list (service name / status / startup enabled); click a row to tail the journal below; start / stop / restart / enable / disable all require confirmation |
+| **Scheduled Tasks** | Three tabs: cron (including `/etc/crontab` + `cron.d` + each user's crontab), systemd timers, and at queue; clicking a row shows the triggered service / unit file / parsed cron fields |
+| **Security Audit** | Five tabs: currently online (who/w), login history (`last`), failed attempts (`lastb`), sshd failure logs (`auth.log`/`journalctl`), and users & groups |
+| **Software & Environment** | Four tabs: installed packages (with search), repository sources (apt/yum/apk/pacman), environment variables, and PATH commands (scanned on demand) |
+| **Container Management** | Unified API for docker / podman; lists all containers (including stopped ones) + port mappings; details show state/ports/mounts/networks/env; copy the full container ID with one click, and open the mounted host directory directly in SFTP; Start/Stop/Restart plus tail 200 logs; compatible with podman output that emulates the docker CLI |
+| **Firewall Management** | **Overview**: detect and display installation and runtime state for iptables / ip6tables / nftables / ufw / firewalld / Fail2Ban; supports service start/stop control. **iptables / ip6tables**: switch table (`filter`/`nat`/`mangle`/`raw`) and chain; rule table; high-risk rules (full-range ACCEPT) highlighted in red and medium-risk ones in orange. **nftables**: raw ruleset output with risk highlighting. **ufw**: numbered rule table + add / delete rule + enable / disable. **firewalld**: zone list + service control + permanent reload. **Fail2Ban**: jail status + banned IP list + one-click unban |
+| **Resource Alerts** | Background polling of CPU / memory / disk / load / swap; when thresholds stay exceeded, a notification appears in the lower-right corner (disabled by default, enable via `rss.alerts.enabled`); triple suppression: consecutive trigger count · cooldown time · no more reminders for the day; notifications include a **View Dashboard** quick action |
+| **Dependency Check** | One-click health check for 9 categories of required remote tools such as `ss`/`netstat`/`procps`/`iproute2`, with install commands suggested by distribution |
+
+### Toolbox · Plugin Management
+
+> Migrated: Plugin management has been moved out of the **Toolbox** and is now an independent top-level panel in the sidebar. See **Plugin Management** below.
+
+### Plugin Management (Independent Sidebar Panel)
+
+| Card | Description |
+|---|---|
+| **Plugin Usage Guide** | View the plugin usage guide and feature overview (the welcome page) |
+| **Operation Audit Log** | Persists every terminal / panel / Copilot tool invocation in JSONL; 4+1 tabs (All / Terminal / Panel / Copilot / Errors); supports filtering by date / connection / keyword; supports realtime mode, export, and clear; retention period is configurable |
 
 ---
 
-## Copilot Chat 工具
+## SSH Terminal
 
-本插件以 VS Code 原生 `contributes.languageModelTools` + `vscode.lm.registerTool` 把 SSH/SFTP/系统能力暴露给 GitHub Copilot Chat。**无需启动任何服务、也无须配置 `.vscode/mcp.json`** —— 全部走 VS Code 官方工具 API，由 VS Code 负责发现、授权与生命周期管理。
+Integrated xterm; when **Terminal Directory Sync** is enabled, running `cd` in the terminal syncs the SFTP explorer directory via OSC 7 (disabled by default and available from the SFTP panel or settings).
 
-### 可用工具
+## Automatic Account Switching (Per Connection)
 
-| 工具（`#` 引用名） | 说明 |
+Enable sudo / su switching in the connection editor: after the interactive terminal starts, it injects `sudo -i -u` or `su - user`; the exec channel uses `printf base64 | base64 -d | sudo -n -H -u 'user' bash -s` wrapping, with no shell injection risk; all Copilot tool calls use the same privilege-escalation path.
+
+## Remote Editing
+
+Double-click a remote file to download it into a local cache, then save to write it back automatically. The cache path can be configured with `rss.editor.tempDir`; if left empty, `cache/` under extension storage is used.
+
+---
+
+## Copilot Chat Tools
+
+This extension integrates SSH/SFTP/system capabilities into GitHub Copilot Chat through VS Code native Language Model Tools. **No service needs to be started, and no `.vscode/mcp.json` configuration is required**. VS Code handles tool discovery, authorization, and lifecycle management.
+
+### Available Tools
+
+| Tool (`#` reference name) | Description |
 |---|---|
-| `#sshListConnections` | 列出 SSH 连接、主/备用地址及用户录入的内外网标签；返回结构化到期状态，临近到期时可主动提醒（不含敏感字段） |
-| `#sshExec` | 在指定连接执行命令；命中危险命令黑名单直接拒绝；默认弹窗二次确认 |
-| `#interactiveStart` / `#interactiveRead` | 以受控 PTY 启动具体交互式管理工具，并按 cursor 增量读取菜单 / 问答输出 |
-| `#interactiveSend` / `#interactiveClose` | 每次确认后发送一行非敏感输入，或终止交互会话；密码 / 口令 / OTP 强制转真实终端 |
-| `#sftpList` / `#sftpRead` / `#sftpWrite` | 远程目录列表、文本读写（`>1MB` 不许读，请改用 `#sftpDownload`） |
-| `#sftpUpload` / `#sftpDownload` | 单文件上传 / 下载；上传到受保护路径会被拒绝 |
-| `#sftpUploadDir` | 递归上传本地目录（需二次确认）；冲突策略 `overwrite`（默认）或 `skip` |
-| `#systemInfo` | 抓取 `uname -a; uptime; free -h; df -h` |
-| `#topProcesses` / `#findProcesses` / `#killProcess` | 按 CPU/内存查 top；ps args 子串匹配；KILL 含二次确认与信号 / PID 白名单 |
-| `#inspectPort` | 端口监听情况 + ESTABLISHED 连接数 + 去重远端 IP 数 + 可选样本 |
-| `#tailLog` | `tail -n` 一次性快照（非流式），可选 `grep -F` 过滤 |
-| `#listSnippets` / `#runSnippet` | 列出当前可用片段；填入终端可选自动回车（受危险命令白名单与连接绑定校验） |
-| `#listPortForwards` | 列出端口转发配置 + 实时状态（连接数 / 字节累计 / 最后错误） |
-| `#listServices` | 列出 systemd/sysv 服务及其 active/enabled 状态；支持按名称过滤、只看运行中 |
-| `#serviceLogs` | 读取指定服务（unit）的 `journalctl` 日志快照，可选子串过滤 |
-| `#listScheduledTasks` | 汇总 crontab / systemd timer / at 队列；可选附带某个 timer 的详情 |
-| `#firewallOverview` | 检测 iptables/ip6tables/nftables/ufw/firewalld/fail2ban 的安装、运行、开机自启状态 |
-| `#listPackages` | 已安装软件包（可按名称过滤）+ 仓库源；`includeEnv` 时附带环境变量（敏感字段自动脱敏为 `***`） |
-| `#processDetail` | 单个 PID 的命令行 / 工作目录 / 打开文件等详情；`includeEnv` 时附带进程环境变量（同样自动脱敏） |
-| `#securityAudit` | 当前在线用户、最近成功/失败登录、sshd 认证失败摘要，及可选的用户/组/sudoers 概览 |
+| `#sshListConnections` | List SSH connections, primary/alternate addresses, and user-provided internal/external network labels; returns structured expiration status and can proactively remind on approaching expiration (without sensitive fields) |
+| `#sshExec` | Execute commands on a specified connection; commands matching the dangerous-command blacklist are rejected immediately; confirmation dialog is shown by default |
+| `#interactiveStart` / `#interactiveRead` | Start a specific interactive administration tool in a controlled PTY and incrementally read menu / prompt output by cursor |
+| `#interactiveSend` / `#interactiveClose` | After confirmation each time, send one line of non-sensitive input or terminate the interactive session; passwords / passphrases / OTPs are forcibly redirected to a real terminal |
+| `#sftpList` / `#sftpRead` / `#sftpWrite` | Remote directory listing and text read/write (`>1MB` cannot be read; use `#sftpDownload` instead) |
+| `#sftpUpload` / `#sftpDownload` | Upload / download a single file; uploads to protected paths are rejected |
+| `#sftpUploadDir` | Recursively upload a local directory (requires confirmation); conflict policy is `overwrite` (default) or `skip` |
+| `#systemInfo` | Collect `uname -a; uptime; free -h; df -h` |
+| `#topProcesses` / `#findProcesses` / `#killProcess` | Find top processes by CPU/memory; match `ps args` by substring; KILL requires confirmation and enforces signal / PID allowlists |
+| `#inspectPort` | Port listening status + ESTABLISHED connection count + deduplicated remote IP count + optional samples |
+| `#tailLog` | One-shot `tail -n` snapshot (non-streaming), with optional `grep -F` filtering |
+| `#listSnippets` / `#runSnippet` | List currently available snippets; fill into terminal with optional auto-enter (subject to dangerous-command allowlist and connection binding validation) |
+| `#listPortForwards` | List port-forwarding configurations + realtime status (connection count / cumulative bytes / last error) |
+| `#listServices` | List systemd/sysv services and their active/enabled status; supports name filtering and showing only running services |
+| `#serviceLogs` | Read a `journalctl` log snapshot for a specified service (`unit`), with optional substring filtering |
+| `#listScheduledTasks` | Summarize crontab / systemd timer / at queue; can optionally include details for a specific timer |
+| `#firewallOverview` | Detect installation, runtime, and startup-enabled status for iptables/ip6tables/nftables/ufw/firewalld/fail2ban |
+| `#listPackages` | Installed packages (optionally filtered by name) + repository sources; when `includeEnv` is enabled, environment variables are included with sensitive fields automatically masked as `***` |
+| `#processDetail` | Details for a single PID such as command line / working directory / open files; when `includeEnv` is enabled, process environment variables are also included (and automatically masked in the same way) |
+| `#securityAudit` | Currently online users, recent successful/failed logins, sshd authentication failure summaries, plus optional overviews of users/groups/sudoers |
 
-> 待办任务管理仍保留在插件「工具集」中，但不再注册为 Copilot Chat 工具，避免占用工具列表和模型选择上下文。
+> To-do management remains in the extension's **Toolbox**, but is no longer registered as a Copilot Chat tool, to avoid occupying tool-list and model-selection context.
 
-### 使用方式
+### How to Use
 
-1. 在《连接》面板中先连上目标主机；
-2. 打开 Copilot Chat，输入 `#`，在弹出的工具列表中选择 `sshExec` / `sftpList` 等；或直接描述需求让 Copilot 自行选工具；
-3. 凙性操作会被 VS Code 原生二次确认 UI 拦下来。
+1. Connect to the target host first in the **Connections** panel.
+2. Open Copilot Chat, type `#`, choose `sshExec`, `sftpList`, and so on from the popup tool list; or describe your intent directly and let Copilot choose the tools.
+3. Destructive operations are intercepted by VS Code's native second-confirmation UI.
 
-### 部署场景示例
+### Deployment Example
 
 ```
-帮我用 prod-1 连接部署一下 seller-api：
-1. 在 /data/api/seller-api 执行 ./service.sh backup；
-2. 把本地 /Users/me/work/seller-api/target/seller-api.jar 传到远程同名位置；
-3. 把本地 target/lib/ 递归传上去覆盖远程 lib/；
-4. 执行 ./service.sh restart；
-5. 读一下 log/seller-api.log 最后 200 行，看看启动有没有报错。
+Help me deploy seller-api using the prod-1 connection:
+1. Run ./service.sh backup in /data/api/seller-api;
+2. Upload the local /Users/me/work/seller-api/target/seller-api.jar to the remote path with the same name;
+3. Recursively upload the local target/lib/ to overwrite the remote lib/;
+4. Run ./service.sh restart;
+5. Read the last 200 lines of log/seller-api.log and check whether there are startup errors.
 ```
 
-Copilot 会拆成：`#sshExec backup` → `#sftpUpload jar` → `#sftpUploadDir lib` → `#sshExec restart` → `#tailLog log`，每一步危险操作都会跳出 VS Code 原生确认框。
+Copilot will break it down as: `#sshExec backup` → `#sftpUpload jar` → `#sftpUploadDir lib` → `#sshExec restart` → `#tailLog log`. Each dangerous operation triggers VS Code's native confirmation dialog.
 
 ---
 
-## 数据安全与隐私
+## Data Security and Privacy
 
-### 你的数据存在哪里
+### Where Your Data Is Stored
 
-| 数据类型 | 存储位置 |
+| Data Type | Storage Location |
 |---|---|
-| 主机 / 端口 / 用户名 / 分组 / ProxyJump 引用 | `connections.json`（VS Code globalStorage）—— JSON 明文，仅本机可读，**不写入 `~/.ssh`** |
-| 密码 / 私钥内容 / passphrase | **VS Code SecretStorage**（macOS Keychain · Windows Credential Vault · Linux libsecret） |
-| 主机指纹 | `known_hosts.json`（同 globalStorage）；首次 TOFU 写入，更换会显式弹窗 |
-| 远程文件本地缓存 | `cache/` 子目录或 `rss.editor.tempDir`，仅本地 |
+| Host / port / username / groups / ProxyJump references | `connections.json` (VS Code `globalStorage`) — plain JSON text, readable only on the local machine, **never written to `~/.ssh`** |
+| Password / private key content / passphrase | **VS Code SecretStorage** (macOS Keychain · Windows Credential Vault · Linux libsecret) |
+| Host fingerprints | `known_hosts.json` (also in `globalStorage`); written on first TOFU trust, and changes trigger an explicit dialog |
+| Local cache of remote files | `cache/` subdirectory or `rss.editor.tempDir`, local only |
 
-### 网络出站
+### Outbound Network Traffic
 
-- 插件本身**不上报任何遥测**，不向作者服务器发送任何数据。
-- SSH / SFTP 流量**仅**发往你自己配置的主机（或经由你自己配置的跳板机）。
-- 唯一可能的第三方调用是端口监控的 **GeoIP 解析**（默认关闭）；开启后仅把 ESTABLISHED 列表的对端公网 IP 发给你选定的 provider。
+- The extension itself **does not report any telemetry** and does not send any data to the author's servers.
+- SSH / SFTP traffic goes **only** to the hosts you configure yourself (or through the jump hosts you configure yourself).
+- The only possible third-party request is **GeoIP resolution** in Port Monitor (disabled by default); when enabled, only the peer public IPs from the ESTABLISHED list are sent to the provider you choose.
 
-### 配置导入 / 导出
+### Import / Export of Configuration
 
-「连接」面板标题栏的 ☁⏫ / ☁⏬ 即为导出 / 导入；命令面板搜「导出连接配置」/「导入连接配置」也可。
+Use ☁⏫ / ☁⏬ in the title bar of the **Connections** panel to export / import; you can also search **Export Connection Configuration** / **Import Connection Configuration** in the Command Palette.
 
-| 模式 | 说明 |
+| Mode | Description |
 |---|---|
-| **加密导出（推荐）** | PBKDF2-SHA256（200k 迭代）派生密钥 + AES-256-GCM；导入需同一口令；文件被篡改会解密失败 |
-| **仅结构** | 只导出主机清单 + 分组层级，**不含任何凭证**，适合团队共享 |
-| **明文导出** | 必须经 modal 二次确认；仅供本地短期调试 |
+| **Encrypted Export (Recommended)** | PBKDF2-SHA256 (200k iterations) key derivation + AES-256-GCM; importing requires the same passphrase; tampered files fail to decrypt |
+| **Structure Only** | Exports only the host list + group hierarchy, **without any credentials**, suitable for team sharing |
+| **Plaintext Export** | Requires modal confirmation; for short-term local debugging only |
 
-导入时所有 ID 重新分配，**绝不会覆盖现有连接**；ProxyJump 引用按映射重写。
+When importing, all IDs are reassigned, and **existing connections are never overwritten**; ProxyJump references are rewritten based on the new mapping.
 
-### SFTP / Copilot 操作的统一保护层
+### Unified Protection Layer for SFTP / Copilot Operations
 
-写 / 删 / 重命名 / 上传 / 创建文件夹 都走统一的 `assertWritablePath` 校验（实现见 `src/domain/security/guards.ts`），**无论触发源是 SFTP 浏览器、VS Code 内置文件资源管理器（`rss-sftp://`）、终端 OSC `rss-edit` 还是 Copilot Chat 的 `#sftp*` 工具**，规则一致：
+Write / delete / rename / upload / create folder operations all go through a unified path-protection layer. **No matter whether the source is the SFTP browser, the built-in VS Code file explorer (`rss-sftp://`), terminal OSC `rss-edit`, or Copilot Chat `#sftp*` tools**, the rules are the same:
 
-- 受保护根路径（精确匹配，仅拦截【目录本身】被当成目标）：`/ /bin /sbin /boot /dev /lib /lib64 /proc /sys /usr /var /root /home /opt /run /srv /mnt /media`
-- 受保护子树前缀（命中后其下任意子文件都拒绝）：`/bin/ /sbin/ /boot/ /dev/ /lib/ /lib64/ /proc/ /sys/ /usr/ /root/`
-  - 默认 **不再包含 `/etc/`** —— 编辑 `/etc/nginx/*.conf`、`/etc/systemd/**` 等服务配置是合法运维场景；如果你希望严格保护，可在配置中把 `"/etc/"` 加进 `rss.security.protectedSubtrees`
-- 敏感文件名（即便父目录未命中子树，basename 命中后仍拒绝）：`.ssh/{authorized_keys,known_hosts,config,id_*}`、`sudoers(.d/*)`、`shadow`、`gshadow`、`passwd`、`crontab`
+- Protected root paths (exact match, only blocks the directory itself when used as the target): `/ /bin /sbin /boot /dev /lib /lib64 /proc /sys /usr /var /root /home /opt /run /srv /mnt /media`
+- Protected subtree prefixes (if matched, any child file underneath is rejected): `/bin/ /sbin/ /boot/ /dev/ /lib/ /lib64/ /proc/ /sys/ /usr/ /root/`
+  - By default, **`/etc/` is no longer included**. Editing service configuration such as `/etc/nginx/*.conf` and `/etc/systemd/**` is a legitimate ops scenario. If you want stricter protection, add `"/etc/"` to `rss.security.protectedSubtrees` in your settings.
+- Sensitive filenames (even if the parent directory does not match a protected subtree, matching the basename still causes rejection): `.ssh/{authorized_keys,known_hosts,config,id_*}`, `sudoers(.d/*)`, `shadow`, `gshadow`, `passwd`, `crontab`
 
-**路径规范化** 严格处理特殊字符：拒绝控制字符（NUL / CR / LF / TAB / DEL）；折叠 `//`；解析 `.` / `..` 并阻断越根越界；POSIX 语义下 `\` 视作普通字符不当作分隔符。非法正则会被静默忽略并写入输出日志，不会让插件崩溃。
+**Path normalization** handles special characters strictly: control characters are rejected (`NUL / CR / LF / TAB / DEL`); `//` is collapsed; `.` / `..` are resolved and prevented from escaping above root; under POSIX semantics, `\` is treated as a normal character rather than a separator. Invalid regex patterns are silently ignored and written to the output log, and will not crash the extension.
 
-**人工旁路**：交互式来源（SFTP 浏览器 / 文件资源管理器 / OSC `rss-edit`）命中拦截时会弹出模态对话框，提供「已知晓，继续执行」按钮，点击后**仅本次操作**被放行，并写一条 warn 级别审计日志（含路径、操作类型、连接名）。如不希望任何旁路，可把 `rss.security.allowBypass` 设为 `false`，所有拦截都是硬阻断。**Copilot Chat 工具调用永远是硬拦截，不受 `allowBypass` 影响**——避免 AI 自助绕过。
+**Manual bypass**: when an interactive source (SFTP browser / file explorer / OSC `rss-edit`) hits a blocked path, a modal dialog appears with an **I understand, continue** button. Clicking it allows **only this single operation** and writes a warn-level audit log entry (including path, operation type, and connection name). If you do not want any bypass at all, set `rss.security.allowBypass` to `false`; then all blocks are hard stops. **Copilot Chat tool invocations are always hard-blocked and are not affected by `allowBypass`** to prevent AI from bypassing protections on its own.
 
-可配置项：
+Configurable items:
 
-| 配置项 | 说明 |
+| Setting | Description |
 |---|---|
-| `rss.security.protectedPaths` | 精确匹配的受保护根路径列表 |
-| `rss.security.protectedSubtrees` | 子树前缀列表（条目以 `/` 开头与结尾，缺尾部 `/` 会自动补齐） |
-| `rss.security.sensitiveFilePatterns` | 敏感文件名正则数组（i 模式） |
-| `rss.security.interactiveCommandMode` | 受控交互策略：`strict`（默认，真实路径白名单）/ `auto`（自动允许可信系统程序） |
-| `rss.security.interactiveAllowedCommands` | `strict` 模式可选的可信远端可执行文件真实绝对路径；`auto` 模式忽略 |
-| `rss.security.allowBypass` | 交互来源是否允许「已知晓，继续执行」一次性放行（默认 `true`） |
+| `rss.security.protectedPaths` | Exact-match list of protected root paths |
+| `rss.security.protectedSubtrees` | List of subtree prefixes (entries must start and end with `/`; a missing trailing `/` is automatically added) |
+| `rss.security.sensitiveFilePatterns` | Regex array for sensitive filenames (`i` mode) |
+| `rss.security.interactiveCommandMode` | Controlled interactive strategy: `strict` (default, real-path allowlist) / `auto` (automatically allow trusted system programs) |
+| `rss.security.interactiveAllowedCommands` | Optional real absolute paths of trusted remote executables in `strict` mode; ignored in `auto` mode |
+| `rss.security.allowBypass` | Whether interactive sources may use the one-time **I understand, continue** bypass (default `true`) |
 
-`#sshExec` 命中危险命令（`rm -rf /`、`mkfs`、`dd of=/dev/`、`shutdown`、防火墙清空、`crontab -r`、`curl|sh`、内核参数写入 等）会被直接拒绝，错误信息会引导用户「请手工在真实终端中以适当身份（sudo）执行」。**命令级危险白名单不提供任何「绕过开关」**。
+If `#sshExec` matches a dangerous command (`rm -rf /`, `mkfs`, `dd of=/dev/`, `shutdown`, firewall flushes, `crontab -r`, `curl|sh`, kernel parameter writes, and so on), it is rejected immediately. The error message instructs the user to run it manually in a real terminal with the appropriate identity (`sudo`). **The command-level dangerous-command allowlist never provides any bypass switch**.
 
-### 受控交互会话
+### Controlled Interactive Sessions
 
-`#interactiveStart` 会先通过 `command -v` + `realpath` / `readlink -f` 解析真实可执行路径。`rss.security.interactiveCommandMode` 默认 `strict`，要求命中可选路径白名单；切换为 `auto` 后，root 拥有、组/其他用户不可写且不位于用户/临时目录中的常规程序可自动放行。两种模式都会拒绝系统级危险命令、shell 语法、凭证参数，以及 shell / 解释器 / 命令包装器 / 可逃逸程序。`#interactiveRead` 使用 cursor 增量读取，并把远端输出视为不可信数据；`#interactiveSend` 每次发送前展示完整单行输入并强制确认，同时拒绝 shell 元字符并复用危险命令黑名单；`#interactiveClose` 负责终止并释放 PTY。
+`#interactiveStart` first resolves the real executable path through `command -v` + `realpath` / `readlink -f`. By default, `rss.security.interactiveCommandMode` is `strict`, which requires the result to match the optional path allowlist. When switched to `auto`, ordinary programs that are owned by root, not writable by group/others, and not located in user or temporary directories may be allowed automatically. Both modes reject system-level dangerous commands, shell syntax, credential parameters, as well as shells / interpreters / command wrappers / escape-capable programs. `#interactiveRead` reads incrementally by cursor and treats remote output as untrusted data; `#interactiveSend` shows the full one-line input before every send and requires confirmation, while also rejecting shell metacharacters and reusing the dangerous-command blacklist; `#interactiveClose` terminates the PTY and releases resources.
 
-- 每个连接最多 2 个活动会话，全局最多 10 个；运行中 15 分钟无活动自动终止，结束后的输出保留 5 分钟。
-- 输出缓冲上限 256 KiB，单次最多返回 48 KiB；ANSI / OSC 控制序列会在交给模型前移除。
-- 常见密码、token、API key 等输出值会先脱敏；检测到密码、passphrase、OTP、PIN、token、验证码等输入提示时立即封锁并终止会话，模型不得继续发送；必须改用真实 SSH 终端。
-- `#interactiveSend` 的输入正文不会写入审计日志，只记录长度、连接、会话和是否回车，避免误传秘密后二次落盘。
+- Up to 2 active sessions per connection and 10 globally; an active session is terminated automatically after 15 minutes of inactivity, and output is retained for 5 minutes after termination.
+- Output buffer limit is 256 KiB, and a single read returns at most 48 KiB; ANSI / OSC control sequences are removed before data is handed to the model.
+- Common password, token, and API key output values are masked first; once prompts for password, passphrase, OTP, PIN, token, verification code, and similar inputs are detected, the session is blocked and terminated immediately, and the model must not continue sending input; a real SSH terminal must be used instead.
+- The input body sent by `#interactiveSend` is not written to the audit log. Only length, connection, session, and whether Enter was sent are recorded, to avoid persisting secrets after accidental submission.
 
-### 凭证最佳实践
+### Credential Best Practices
 
-- 优先用 **SSH Agent** 或 **带 passphrase 的私钥**，避免裸密码；
-- 关键服务器配置 **跳板机**，缩小公网暴露面；
-- 使用 **「测试连接」** 而非直接连接，可在不写 `known_hosts` 的前提下验证认证。
+- Prefer **SSH Agent** or **private keys with a passphrase** over raw passwords.
+- Put **jump hosts** in front of critical servers to reduce public exposure.
+- Use **Test Connection** instead of connecting directly so you can validate authentication without writing `known_hosts`.
 
 ---
 
-## 远端会执行哪些指令？
+## What Commands Are Executed on the Remote Host?
 
-本插件不安装任何 agent、不下载任何二进制到远端；所有功能都基于 OpenSSH 自带能力 + 通用 Linux 工具。下列命令均按用户操作触发，**无后台静默调用**。
+This extension does not install any agent or download any binary to the remote host. All functionality is built on standard OpenSSH capabilities plus common Linux tools. The commands below are triggered by explicit user actions only, with **no silent background invocation**.
 
-| 面板 / 操作 | 权限 | 典型命令 |
+| Panel / Action | Required Privilege | Typical Commands |
 |---|---|---|
-| 建立 SSH / SFTP | 普通用户 | OpenSSH 标准握手；SFTP 子系统 `ls/stat/open/read/write/mkdir/rename/remove` |
-| Copilot 受控交互 | 取决于已确认命令 | 使用 SSH PTY 执行用户确认的具体管理工具；逐轮非敏感输入均单独确认，不开放通用 shell，不安装远端 agent |
-| 终端 cwd 同步（可关闭） | 普通用户 | `PROMPT_COMMAND` / `precmd` 注入 OSC 7 |
-| 仪表盘 · 系统 / 网络 | 普通用户读 | `uname / uptime`、`/proc/{loadavg,meminfo,cpuinfo,net/dev}`、`df -P`、`ip -s link` 兜底 `ifconfig` |
-| 进程管理 | 普通用户读 · KILL 需相应权限 | `ps -eo …`、`/proc/<pid>/{status,environ,fd,stack}`；KILL 显式二次确认 |
-| 端口监控 | 普通用户 | 优先 `ss -ltnp / -tnp`，兜底 `netstat` |
-| 服务管理 | 启停可能 sudo | `systemctl list-units / show / status`、`journalctl -u …`；启停 / 启用 / 禁用均确认 |
-| 计划任务 | 普通用户 | `crontab -l`、`cat /etc/crontab /etc/cron.d/*`、`systemctl list-timers`、`atq / at -c`，**不修改** |
-| 命令历史 | 普通用户 | `cat ~/.bash_history ~/.zsh_history ~/.config/fish/fish_history` 等；不会修改 / 触发执行 |
-| 安全审计 | 普通用户读 | `who / w / last / lastb`；`journalctl _COMM=sshd` 或 `/var/log/auth.log` |
-| 软件与环境 | 普通用户读 | `dpkg -l / rpm -qa / apk info / pacman -Q`；`printenv`；按需 `ls $PATH` |
-| 容器管理 | 容器组 / sudo | `docker ps -a / inspect / logs --tail 200`（podman 同理） |
-| 防火墙管理 | root 或 sudo（规则采集需特权） | `iptables -t <tbl> -L -n -v --line-numbers`、`nft list ruleset`、`ufw status numbered`、`firewall-cmd --list-all-zones`、`fail2ban-client status [<jail>]`；控制操作（ufw add/delete、fail2ban unban、systemctl）均含二次确认 |
-| 依赖检查 | 普通用户 | `command -v ss netstat ps systemctl docker …` 类型探测；不安装任何东西 |
-| 资源告警轮询（`rss.alerts.enabled`） | 普通用户读 | 五项合一：`cat /proc/loadavg`、`grep … /proc/meminfo`、`grep '^cpu ' /proc/stat`、`df -Pk`、`nproc`；轮询间隔默认 30s；**默认关闭** |
+| Establish SSH / SFTP | Regular user | Standard OpenSSH handshake; SFTP subsystem `ls/stat/open/read/write/mkdir/rename/remove` |
+| Copilot controlled interaction | Depends on the confirmed command | Uses SSH PTY to execute the specific administration tool confirmed by the user; every round of non-sensitive input is confirmed separately; no general-purpose shell is exposed and no remote agent is installed |
+| Terminal cwd sync (can be disabled) | Regular user | `PROMPT_COMMAND` / `precmd` injects OSC 7 |
+| Dashboard · System / Network | Regular user read | `uname / uptime`, `/proc/{loadavg,meminfo,cpuinfo,net/dev}`, `df -P`, fallback `ip -s link` and `ifconfig` |
+| Process Management | Regular user read · KILL requires corresponding privilege | `ps -eo …`, `/proc/<pid>/{status,environ,fd,stack}`; KILL always requires explicit confirmation |
+| Port Monitor | Regular user | Prefer `ss -ltnp / -tnp`, fallback `netstat` |
+| Service Management | Start/stop may require sudo | `systemctl list-units / show / status`, `journalctl -u …`; start/stop / enable / disable all require confirmation |
+| Scheduled Tasks | Regular user | `crontab -l`, `cat /etc/crontab /etc/cron.d/*`, `systemctl list-timers`, `atq / at -c`, **no modifications** |
+| Command History | Regular user | `cat ~/.bash_history ~/.zsh_history ~/.config/fish/fish_history` and similar; never modifies or triggers execution |
+| Security Audit | Regular user read | `who / w / last / lastb`; `journalctl _COMM=sshd` or `/var/log/auth.log` |
+| Software & Environment | Regular user read | `dpkg -l / rpm -qa / apk info / pacman -Q`; `printenv`; `ls $PATH` on demand |
+| Container Management | Container group / sudo | `docker ps -a / inspect / logs --tail 200` (same idea for podman) |
+| Firewall Management | root or sudo (privilege required to collect rules) | `iptables -t <tbl> -L -n -v --line-numbers`, `nft list ruleset`, `ufw status numbered`, `firewall-cmd --list-all-zones`, `fail2ban-client status [<jail>]`; control actions (`ufw add/delete`, `fail2ban unban`, `systemctl`) all require confirmation |
+| Dependency Check | Regular user | `command -v ss netstat ps systemctl docker …` capability probes; does not install anything |
+| Resource alert polling (`rss.alerts.enabled`) | Regular user read | Five-in-one: `cat /proc/loadavg`, `grep … /proc/meminfo`, `grep '^cpu ' /proc/stat`, `df -Pk`, `nproc`; default polling interval is 30s; **disabled by default** |
 
-> 服务管理 / 计划任务 / 安全审计 / 软件与环境 / 防火墙管理这 5 类只读采集，同时也通过 Copilot 工具（`#listServices` `#serviceLogs` `#listScheduledTasks` `#securityAudit` `#listPackages` `#firewallOverview`）暴露给 Copilot Chat，命令与上表完全一致；`#listPackages` / `#processDetail` 返回环境变量时会对疑似密码/密钥/令牌字段自动脱敏为 `***`。
-
----
-
-## 远端依赖检查
-
-VS Code 端不会向远端推送任何 binary，所以远端必须自带：`ss / netstat`、`ps`、`/proc`、`ip / ifconfig`、`tar / gzip` 等工具。常见的 minimal Alpine、容器镜像、定制 RHEL 经常缺失。
-
-**入口**：
-- 「已连接会话」面板标题栏 ✓ 图标
-- 每个活动会话行右侧 ✓ inline 按钮
-- 端口监控为空时点击「点此检查远端依赖组件 →」
-
-**面板提供**：
-- 操作系统指纹（PRETTY_NAME / 发行版族 / 内核 / 架构 / 是否 root）
-- 9 类能力的探针结果（命令 + 详情）
-- 按发行版自动选中推荐的安装命令（apt / yum / apk / pacman）+ 一键复制
-- 「打开终端」按钮可立即在 SSH 终端中粘贴执行
+> The five read-only collection categories Service Management / Scheduled Tasks / Security Audit / Software & Environment / Firewall Management are also exposed to Copilot Chat through the tools `#listServices` `#serviceLogs` `#listScheduledTasks` `#securityAudit` `#listPackages` `#firewallOverview`, using exactly the same commands as shown above; when `#listPackages` / `#processDetail` return environment variables, suspected password/key/token fields are automatically masked as `***`.
 
 ---
 
-## 配置项
+## Remote Dependency Check
 
-所有设置位于 VS Code Settings → 搜索 `All in One SSH Studio`，或编辑 `settings.json`：
+The VS Code side never pushes any binary to the remote host, so the remote host must already provide tools such as `ss / netstat`, `ps`, `/proc`, `ip / ifconfig`, and `tar / gzip`. Common minimal Alpine images, container images, and customized RHEL systems often miss some of them.
 
-| 设置键 | 类型 | 默认值 | 说明 |
+**Entry points**:
+- ✓ icon in the title bar of the **Connected Sessions** panel
+- ✓ inline button on the right side of each active session row
+- Click **Click here to check remote dependencies →** when Port Monitor is empty
+
+**What the panel provides**:
+- OS fingerprint (`PRETTY_NAME` / distro family / kernel / architecture / whether root)
+- Probe results for 9 capability categories (command + details)
+- Recommended install command automatically selected by distribution (`apt` / `yum` / `apk` / `pacman`) + one-click copy
+- **Open Terminal** button to paste and run immediately in the SSH terminal
+
+---
+
+## Settings
+
+All settings are available in VS Code Settings → search for **All in One SSH Studio**, or edit `settings.json` directly:
+
+| Setting Key | Type | Default | Description |
 |---|---|---|---|
-| `rss.storage.location` | enum (`global`\|`workspace`) | `global` | 连接配置文件存储位置；不会写入 `~/.ssh` |
-| `rss.editor.tempDir` | string | `""` | 远程文件本地缓存目录；留空则使用扩展存储下的 `cache/` |
-| `rss.sftp.concurrency` | number | `4` | SFTP 同时进行的并发任务数 |
-| `rss.sftp.autoOpenExplorer` | boolean | `true` | 连接成功后自动打开 SFTP 资源管理器 |
-| `rss.sftp.listCacheTtl` | number | `8` | SFTP 文件列表缓存有效期（秒，0 = 关闭） |
-| `rss.sftp.deletePreStat` | boolean | `false` | 删除文件夹前是否递归统计子项数 / 大小用于确认弹窗 |
-| `rss.sftp.deleteUseShellRm` | boolean | `false` | 删除文件夹时使用远端 shell 的 `rm -rf` 一次性删除（仅 1 次往返，远程大目录性能显著提升） |
-| `rss.sftp.writeConfirm` | boolean | `false` | 编辑 `rss-sftp://` 在线文件时手动保存（Ctrl+S）前弹出确认，防止误操作覆盖远端文件 |
-| `rss.terminal.defaultShell` | string | `""` | 远程终端启动时使用的 shell；留空使用服务器默认 |
-| `rss.terminal.syncCwd` | boolean | `false` | 通过 OSC 7 把终端 cwd 同步到 SFTP 面板；默认关闭，可在 SFTP 面板中临时切换 |
-| `rss.dashboard.refreshInterval` | number | `5` | 仪表盘自动刷新间隔（秒） |
-| `rss.process.refreshInterval` | number | `3` | 进程管理器刷新间隔（秒） |
-| `rss.network.refreshInterval` | number | `3` | 端口监控刷新间隔（秒） |
-| `rss.transfer.maxConcurrent` | number | `4` | 传输队列最大并发数 |
-| `rss.geoip.provider` | enum (`none`\|`ip-api`\|`ipinfo`\|`custom`) | `none` | 端口监控 GeoIP 提供方 |
-| `rss.geoip.apiKey` | string | `""` | GeoIP 提供方 API Key |
-| `rss.geoip.urlTemplate` | string | `""` | 自定义 GeoIP URL 模板，支持 `{ip}`、`{key}` 占位 |
-| `rss.geoip.fieldMap` | object | `{country,region,city,org}` | 自定义 GeoIP 响应字段映射（点号路径） |
-| `rss.audit.retentionDays` | number | `30` | 操作审计日志保留天数 |
-| `rss.portForward.defaultListenAddr` | string | `127.0.0.1` | 新增本地端口转发的默认监听地址 |
-| `rss.snippets.confirmRun` | boolean | `true` | 命令片段发送到终端前是否要求二次确认 |
-| `rss.tools.<id>.enabled` | boolean | `true` | 控制工具集中各模块是否显示；14 个可配置 id：`snippets` / `portForward` / `logViewer` / `todos` / `process` / `port` / `history` / `services` / `schedules` / `software` / `containers` / `security` / `firewall` / `deps`；`sftp` 与 `transfer` 始终开启；设置变更即时生效，无需重载 |
-| `rss.alerts.enabled` | boolean | `false` | 资源超阈告警主开关（默认关闭） |
-| `rss.alerts.pollInterval` | number | `30` | 告警轮询间隔（秒，最小 10） |
-| `rss.alerts.cooldownMinutes` | number | `15` | 同一连接同一指标的告警冷却时间（分钟） |
-| `rss.alerts.consecutiveCount` | number | `2` | 连续超阈次数门槛，达到后才触发通知（防抖） |
-| `rss.alerts.cpu.threshold` | number | `90` | CPU 使用率告警阈值（%） |
-| `rss.alerts.memory.threshold` | number | `90` | 内存使用率告警阈值（%） |
-| `rss.alerts.disk.threshold` | number | `85` | 磁盘使用率告警阈值（%，取所有挂载点中最高值） |
-| `rss.alerts.load.threshold` | number | `2.0` | 系统负载阈值（1 分钟负载 / CPU 核数，默认 2.0×） |
-| `rss.alerts.swap.threshold` | number | `50` | Swap 使用率告警阈值（%） |
+| `rss.storage.location` | enum (`global`\|`workspace`) | `global` | Storage location of the connection configuration file; never written to `~/.ssh` |
+| `rss.editor.tempDir` | string | `""` | Local cache directory for remote files; if empty, `cache/` under extension storage is used |
+| `rss.sftp.concurrency` | number | `4` | Number of concurrent SFTP tasks |
+| `rss.sftp.autoOpenExplorer` | boolean | `true` | Automatically open the SFTP explorer after a successful connection |
+| `rss.sftp.listCacheTtl` | number | `8` | TTL of the SFTP file-list cache (seconds, `0 = disabled`) |
+| `rss.sftp.deletePreStat` | boolean | `false` | Whether to recursively count child items / size before deleting a folder for the confirmation dialog |
+| `rss.sftp.deleteUseShellRm` | boolean | `false` | When deleting a folder, use the remote shell command `rm -rf` to remove it in one shot (only one round trip, significantly faster for large remote directories) |
+| `rss.sftp.writeConfirm` | boolean | `false` | When editing an online file via `rss-sftp://`, show a confirmation before manual save (`Ctrl+S`) to avoid accidentally overwriting the remote file |
+| `rss.terminal.defaultShell` | string | `""` | Shell used when starting the remote terminal; if empty, the server default is used |
+| `rss.terminal.syncCwd` | boolean | `false` | Sync terminal cwd to the SFTP panel via OSC 7; disabled by default and can be toggled temporarily in the SFTP panel |
+| `rss.dashboard.refreshInterval` | number | `5` | Auto-refresh interval of the dashboard (seconds) |
+| `rss.process.refreshInterval` | number | `3` | Refresh interval of Process Management (seconds) |
+| `rss.network.refreshInterval` | number | `3` | Refresh interval of Port Monitor (seconds) |
+| `rss.transfer.maxConcurrent` | number | `4` | Maximum concurrency of the transfer queue |
+| `rss.geoip.provider` | enum (`none`\|`ip-api`\|`ipinfo`\|`custom`) | `none` | GeoIP provider for Port Monitor |
+| `rss.geoip.apiKey` | string | `""` | API key for the GeoIP provider |
+| `rss.geoip.urlTemplate` | string | `""` | Custom GeoIP URL template with `{ip}` and `{key}` placeholders |
+| `rss.geoip.fieldMap` | object | `{country,region,city,org}` | Mapping of custom GeoIP response fields (dot-path syntax) |
+| `rss.audit.retentionDays` | number | `30` | Retention period of the operation audit log in days |
+| `rss.portForward.defaultListenAddr` | string | `127.0.0.1` | Default listen address for new local port forwarding |
+| `rss.snippets.confirmRun` | boolean | `true` | Whether command snippets require confirmation before being sent to the terminal |
+| `rss.tools.<id>.enabled` | boolean | `true` | Controls whether each module is shown in the Toolbox; 14 configurable ids: `snippets` / `portForward` / `logViewer` / `todos` / `process` / `port` / `history` / `services` / `schedules` / `software` / `containers` / `security` / `firewall` / `deps`; `sftp` and `transfer` are always enabled; changes take effect immediately with no reload required |
+| `rss.alerts.enabled` | boolean | `false` | Master switch for resource-threshold alerts (disabled by default) |
+| `rss.alerts.pollInterval` | number | `30` | Alert polling interval in seconds (minimum `10`) |
+| `rss.alerts.cooldownMinutes` | number | `15` | Alert cooldown for the same metric on the same connection (minutes) |
+| `rss.alerts.consecutiveCount` | number | `2` | Number of consecutive threshold breaches required before a notification is triggered (debounce) |
+| `rss.alerts.cpu.threshold` | number | `90` | CPU usage alert threshold (%) |
+| `rss.alerts.memory.threshold` | number | `90` | Memory usage alert threshold (%) |
+| `rss.alerts.disk.threshold` | number | `85` | Disk usage alert threshold (%) using the highest value across all mount points |
+| `rss.alerts.load.threshold` | number | `2.0` | System load threshold (1-minute load / CPU core count, default 2.0×) |
+| `rss.alerts.swap.threshold` | number | `50` | Swap usage alert threshold (%) |
 
-### settings.json 示例
+### `settings.json` Example
 
 ```jsonc
 {
@@ -300,32 +302,15 @@ VS Code 端不会向远端推送任何 binary，所以远端必须自带：`ss /
 
 ---
 
-## 命令面板速查
+## Command Palette Quick Reference
 
-| 命令 | 用途 |
+| Command | Purpose |
 |---|---|
-| `All in One SSH Studio: 显示欢迎页` | 重新打开欢迎引导 |
-| `All in One SSH Studio: 新建 SSH 连接` / `新建分组` | 连接管理 |
-| `All in One SSH Studio: 导入 / 导出连接配置` | 配置迁移 |
-| `All in One SSH Studio: 打开终端` / `打开 SFTP 资源管理器` | 与已连接会话交互 |
-| `All in One SSH Studio: 打开端口监控` / `进程管理器` / `传输队列` | 各功能面板 |
-| `All in One SSH Studio: 打开服务管理` / `计划任务` / `命令历史` / `安全审计` / `软件与环境` / `容器管理` / `防火墙管理` | 系统管理类面板（按会话开窗，单连接单实例） |
-| `All in One SSH Studio: 检查远端依赖组件` | 远端依赖体检 |
-| `All in One SSH Studio: 刷新仪表盘` | 强制重拉系统/网络/磁盘三块数据 |
-| Copilot Chat 中输入 `#sshExec` / `#sftpList` 等 | 调用本插件工具 |
-
----
-
-## 语言 / Languages
-
-界面跟随 VS Code 显示语言：简体中文为源语言，英文已全量翻译，其余语言回退英文/中文原文。临时切换：命令面板运行 `Configure Display Language`。
-
-| 语言 | 覆盖 | 来源 |
-|---|---|---|
-| 简体中文 | 100%（源语言） | 内置 |
-| English | 100% | 内置 |
-
-**贡献翻译**：复制 `l10n/bundle.l10n.en.json` 与 `package.nls.en.json` 为 `*.<locale>.json`（如 `ja`），翻译每条 value（key 为中文原文不动），运行 `npm run i18n:check` 校验完备，提 PR 标题 `i18n: add <Language>`。
+| `All in One SSH Studio: Show Welcome Page` | Reopen the welcome guide |
+| `All in One SSH Studio: New SSH Connection` | Quickly add a server connection |
+| `All in One SSH Studio: Import / Export Connection Configuration` | Configuration migration |
+| `All in One SSH Studio: Open Terminal` / `Open SFTP Explorer` | Interact with connected sessions |
+| `All in One SSH Studio: Check Remote Dependencies` | Remote dependency health check |
 
 ---
 
