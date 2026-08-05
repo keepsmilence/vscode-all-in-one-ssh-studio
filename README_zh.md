@@ -2,9 +2,11 @@
 
 [English](README.md) | [简体中文](README_zh.md)
 
-VS Code 内的一站式 SSH 客户端：连接管理、SFTP 浏览、远程编辑、系统/网络/进程监控、端口转发，以及与 GitHub Copilot Chat 原生集成。
+VS Code 内的一站式 SSH 客户端：连接管理、SFTP 浏览、远程编辑、系统/网络/进程监控、端口转发，以及与 GitHub Copilot Chat 和外部 MCP 客户端集成。
 
 > 不向远端推送任何 binary、不上报任何遥测、不在 `~/.ssh` 写文件。所有破坏性操作均强制二次确认。
+
+侧边栏、对话框与全部功能面板会跟随 VS Code 显示语言，运行时界面完整支持 English 与简体中文。
 
 ---
 
@@ -86,13 +88,13 @@ VS Code 内的一站式 SSH 客户端：连接管理、SFTP 浏览、远程编�
 
 ## Copilot Chat 工具
 
-本插件通过 VS Code 原生 Language Model Tools 把 SSH/SFTP/系统能力集成到 GitHub Copilot Chat。**无需启动任何服务、也无须配置 `.vscode/mcp.json`**，工具发现、授权与生命周期均由 VS Code 管理。
+本插件默认通过 VS Code 原生 Language Model Tools 把 SSH/SFTP/系统能力集成到 GitHub Copilot Chat。原生通道仍然**无需启动服务，也无须配置 `.vscode/mcp.json`**，工具发现、授权与生命周期均由 VS Code 管理。`rss.copilot.toolChannel` 可切换为 VS Code MCP provider；默认值 `native` 会避免同一能力在 Copilot 工具列表中重复出现。面向其他编辑器的可选 MCP 兼容通道见下文。
 
 ### 可用工具
 
 | 工具（`#` 引用名） | 说明 |
 |---|---|
-| `#sshListConnections` | 列出 SSH 连接、主/备用地址及用户录入的内外网标签；返回结构化到期状态，临近到期时可主动提醒（不含敏感字段） |
+| `#sshListConnections` | 列出 SSH 连接、嵌套分组路径、主/备用地址及用户录入的内外网标签；返回结构化到期状态，临近到期时可主动提醒（不含敏感字段） |
 | `#sshExec` | 在指定连接执行命令；命中危险命令黑名单直接拒绝；默认弹窗二次确认 |
 | `#interactiveStart` / `#interactiveRead` | 以受控 PTY 启动具体交互式管理工具，并按 cursor 增量读取菜单 / 问答输出 |
 | `#interactiveSend` / `#interactiveClose` | 每次确认后发送一行非敏感输入，或终止交互会话；密码 / 口令 / OTP 强制转真实终端 |
@@ -121,6 +123,21 @@ VS Code 内的一站式 SSH 客户端：连接管理、SFTP 浏览、远程编�
 2. 打开 Copilot Chat，输入 `#`，在弹出的工具列表中选择 `sshExec` / `sftpList` 等；或直接描述需求让 Copilot 自行选工具；
 3. 破坏性操作会被 VS Code 原生二次确认 UI 拦下来。
 
+### 外部 MCP 客户端
+
+Cursor、TRAE 及其他 MCP 客户端可以使用与 GitHub Copilot Chat 相同的完整 SSH 工具集。
+
+1. 在插件设置中启用 `rss.mcp.enabled`。
+2. 在同一设置项说明中点击「复制当前工作区的 MCP 客户端配置」。如果当前编辑器未显示该链接，可从命令面板运行「All in One SSH Studio: 复制 MCP 客户端配置」。
+3. 把复制出的 `mcpServers` 对象粘贴到目标客户端的 MCP 配置中；使用工具期间请保持当前插件窗口打开。
+4. 如需让 VS Code Copilot 使用 MCP 工具，把 `rss.copilot.toolChannel` 设为 `mcp`。建议保留默认的 `native` 以避免工具重复；`both` 可能让同一工具出现两次。
+
+默认的 `rss.mcp.confirmationPolicy=riskBased` 会把只读、非破坏性工具的审批交给 Copilot、Cursor 或 TRAE 自身，不额外显示扩展模态框；命令执行、写入、上传下载、KILL、交互输入和终端片段等状态变更或破坏性工具仍由扩展强制确认，并复用原生工具的命令、路径、PID 等操作详情。设为 `alwaysPrompt` 可恢复每次调用都二次确认。所有 MCP 调用都会按工具、客户端声明和目标连接写入审计，参数复用原生工具的凭证脱敏与命令/正文截断规则；SecretStorage 中的密码、私钥和 passphrase 不会进入 MCP 结果。远端输出、文件/日志内容、进程详情等获准结果会按所选客户端及模型提供方的隐私策略处理。
+
+> **macOS 上的 TRAE：**请始终使用插件生成的配置。手工填写 TRAE Helper 路径时，路径中的空格可能导致启动失败。
+
+扩展重载后，如果只有一个 All in One SSH Studio 窗口在提供 MCP 工具，已有配置会自动重新连接；若多个工作区窗口同时启用 MCP，请从目标窗口重新复制配置。
+
 ### 部署场景示例
 
 ```
@@ -143,15 +160,19 @@ Copilot 会拆成：`#sshExec backup` → `#sftpUpload jar` → `#sftpUploadDir 
 | 数据类型 | 存储位置 |
 |---|---|
 | 主机 / 端口 / 用户名 / 分组 / ProxyJump 引用 | `connections.json`（VS Code globalStorage）—— JSON 明文，仅本机可读，**不写入 `~/.ssh`** |
-| 密码 / 私钥内容 / passphrase | **VS Code SecretStorage**（macOS Keychain · Windows Credential Vault · Linux libsecret） |
+| 密码 / 私钥内容 / passphrase / 提权密码 / GeoIP API Key | **VS Code SecretStorage**（macOS Keychain · Windows Credential Vault · Linux libsecret） |
 | 主机指纹 | `known_hosts.json`（同 globalStorage）；首次 TOFU 写入，更换会显式弹窗 |
 | 远程文件本地缓存 | `cache/` 子目录或 `rss.editor.tempDir`，仅本地 |
+| 操作审计日志 | `globalStorage` 下的 `audit/`，本地 JSONL、保留期可配置；不持久化命令正文、LM 文件内容和交互输入 |
+| MCP 本地服务数据 | `globalStorage` 下的 `mcp/`；只含本地连接信息和轮换授权 token，不含 SSH 凭证 |
 
 ### 网络出站
 
 - 插件本身**不上报任何遥测**，不向作者服务器发送任何数据。
 - SSH / SFTP 流量**仅**发往你自己配置的主机（或经由你自己配置的跳板机）。
-- 唯一可能的第三方调用是端口监控的 **GeoIP 解析**（默认关闭）；开启后仅把 ESTABLISHED 列表的对端公网 IP 发给你选定的 provider。
+- **GeoIP 解析**默认关闭；开启后仅把 ESTABLISHED 列表的对端公网 IP 发给你选定的 provider，API Key 保存在 SecretStorage。
+- **外部 MCP 接入**默认关闭；VS Code Copilot 默认使用原生工具通道。启用 MCP 后，插件与 MCP 客户端之间的通信只在本机进行；获准的工具结果最终发往哪里由所选客户端及其模型提供方决定。
+- 调用 Copilot Chat 工具时，结果可能包含连接元数据、远端命令输出、文件或日志内容、进程详情及登录记录。VS Code 会依据你选择的模型提供方及其隐私条款，把工具结果交给该模型；插件本身不经过作者服务器，也不运行额外中转服务。
 
 ### 配置导入 / 导出
 
@@ -160,8 +181,8 @@ Copilot 会拆成：`#sshExec backup` → `#sftpUpload jar` → `#sftpUploadDir 
 | 模式 | 说明 |
 |---|---|
 | **加密导出（推荐）** | PBKDF2-SHA256（200k 迭代）派生密钥 + AES-256-GCM；导入需同一口令；文件被篡改会解密失败 |
-| **仅结构** | 只导出主机清单 + 分组层级，**不含任何凭证**，适合团队共享 |
-| **明文导出** | 必须经 modal 二次确认；仅供本地短期调试 |
+| **仅结构** | 导出连接元数据、分组层级、命令片段、端口转发定义和日志收藏，**不含凭证**；共享前仍应检查主机名、用户名、备注、路径与命令 |
+| **明文导出** | 必须经 modal 二次确认；仅供本地临时使用，使用后应立即删除 |
 
 导入时所有 ID 重新分配，**绝不会覆盖现有连接**；ProxyJump 引用按映射重写。
 
@@ -272,7 +293,6 @@ VS Code 端不会向远端推送任何 binary，所以远端必须自带：`ss /
 | `rss.network.refreshInterval` | number | `3` | 端口监控刷新间隔（秒） |
 | `rss.transfer.maxConcurrent` | number | `4` | 传输队列最大并发数 |
 | `rss.geoip.provider` | enum (`none`\|`ip-api`\|`ipinfo`\|`custom`) | `none` | 端口监控 GeoIP 提供方 |
-| `rss.geoip.apiKey` | string | `""` | GeoIP 提供方 API Key |
 | `rss.geoip.urlTemplate` | string | `""` | 自定义 GeoIP URL 模板，支持 `{ip}`、`{key}` 占位 |
 | `rss.geoip.fieldMap` | object | `{country,region,city,org}` | 自定义 GeoIP 响应字段映射（点号路径） |
 | `rss.audit.retentionDays` | number | `30` | 操作审计日志保留天数 |
@@ -288,6 +308,11 @@ VS Code 端不会向远端推送任何 binary，所以远端必须自带：`ss /
 | `rss.alerts.disk.threshold` | number | `85` | 磁盘使用率告警阈值（%，取所有挂载点中最高值） |
 | `rss.alerts.load.threshold` | number | `2.0` | 系统负载阈值（1 分钟负载 / CPU 核数，默认 2.0×） |
 | `rss.alerts.swap.threshold` | number | `50` | Swap 使用率告警阈值（%） |
+| `rss.mcp.enabled` | boolean | `false` | 允许 Cursor、TRAE 等外部 MCP 客户端使用插件工具 |
+| `rss.copilot.toolChannel` | `native` / `mcp` / `both` | `native` | 选择 VS Code Copilot 使用工具的方式；推荐 `native`，`both` 可能显示重复工具 |
+| `rss.mcp.confirmationPolicy` | `riskBased` / `alwaysPrompt` | `riskBased` | 选择插件是为每次 MCP 调用追加确认，还是仅确认状态变更和破坏性操作 |
+
+通过命令面板执行「All in One SSH Studio: 安全设置 GeoIP API Key…」来设置或清除 Key；值由 VS Code SecretStorage 保存，不会写入 `settings.json`。
 
 ### settings.json 示例
 
@@ -311,6 +336,7 @@ VS Code 端不会向远端推送任何 binary，所以远端必须自带：`ss /
 | `All in One SSH Studio: 导入 / 导出连接配置` | 配置迁移 |
 | `All in One SSH Studio: 打开终端` / `打开 SFTP 资源管理器` | 与已连接会话交互 |
 | `All in One SSH Studio: 检查远端依赖组件` | 远端依赖体检 |
+| `All in One SSH Studio: 复制 MCP 客户端配置` | 复制当前工作区供 Cursor、TRAE 或其他 MCP 客户端使用的 MCP 配置 |
 
 ---
 

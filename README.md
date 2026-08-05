@@ -2,9 +2,11 @@
 
 [English](README.md) | [简体中文](README_zh.md)
 
-An all-in-one SSH client inside VS Code: connection management, SFTP browsing, remote editing, system/network/process monitoring, port forwarding, plus native integration with GitHub Copilot Chat.
+An all-in-one SSH client inside VS Code: connection management, SFTP browsing, remote editing, system/network/process monitoring, port forwarding, plus integration with GitHub Copilot Chat and external MCP clients.
 
 > No binaries are pushed to the remote host, no telemetry is reported, and nothing is written to `~/.ssh`. All destructive operations always require a second confirmation.
+
+The sidebar, dialogs, and all feature panels follow the VS Code display language. English and Simplified Chinese are supported throughout the runtime UI.
 
 ---
 
@@ -86,13 +88,13 @@ Double-click a remote file to download it into a local cache, then save to write
 
 ## Copilot Chat Tools
 
-This extension integrates SSH/SFTP/system capabilities into GitHub Copilot Chat through VS Code native Language Model Tools. **No service needs to be started, and no `.vscode/mcp.json` configuration is required**. VS Code handles tool discovery, authorization, and lifecycle management.
+By default, this extension integrates SSH/SFTP/system capabilities into GitHub Copilot Chat through VS Code native Language Model Tools. This native path still requires **no service or `.vscode/mcp.json` configuration**; VS Code handles tool discovery, authorization, and lifecycle management. Set `rss.copilot.toolChannel` to use the VS Code MCP provider instead. Its default, `native`, prevents duplicate capabilities in Copilot's tool list. An optional MCP compatibility path for other editors is described below.
 
 ### Available Tools
 
 | Tool (`#` reference name) | Description |
 |---|---|
-| `#sshListConnections` | List SSH connections, primary/alternate addresses, and user-provided internal/external network labels; returns structured expiration status and can proactively remind on approaching expiration (without sensitive fields) |
+| `#sshListConnections` | List SSH connections, nested group path, primary/alternate addresses, and user-provided internal/external network labels; returns structured expiration status and can proactively remind on approaching expiration (without sensitive fields) |
 | `#sshExec` | Execute commands on a specified connection; commands matching the dangerous-command blacklist are rejected immediately; confirmation dialog is shown by default |
 | `#interactiveStart` / `#interactiveRead` | Start a specific interactive administration tool in a controlled PTY and incrementally read menu / prompt output by cursor |
 | `#interactiveSend` / `#interactiveClose` | After confirmation each time, send one line of non-sensitive input or terminate the interactive session; passwords / passphrases / OTPs are forcibly redirected to a real terminal |
@@ -121,6 +123,21 @@ This extension integrates SSH/SFTP/system capabilities into GitHub Copilot Chat 
 2. Open Copilot Chat, type `#`, choose `sshExec`, `sftpList`, and so on from the popup tool list; or describe your intent directly and let Copilot choose the tools.
 3. Destructive operations are intercepted by VS Code's native second-confirmation UI.
 
+### External MCP Clients
+
+Cursor, TRAE, and other MCP clients can use the same complete set of SSH tools as GitHub Copilot Chat.
+
+1. Enable `rss.mcp.enabled` in the extension settings.
+2. In the same setting description, click **Copy this workspace's MCP client configuration**. If the link is unavailable in your editor, run **All in One SSH Studio: Copy MCP Client Configuration** from the Command Palette.
+3. Paste the copied `mcpServers` object into the target client's MCP configuration and keep this extension window open while using the tools.
+4. To make VS Code Copilot use MCP tools, set `rss.copilot.toolChannel` to `mcp`. Keep the default `native` mode to avoid duplicate tools; `both` may show the same tools twice.
+
+With the default `rss.mcp.confirmationPolicy=riskBased`, approval for read-only non-destructive tools is left to Copilot, Cursor, or TRAE without an additional extension modal. State-changing or destructive tools such as command execution, writes, transfers, KILL, interactive input, and terminal snippets still require extension confirmation and reuse the native tool's command, path, PID, and other operation details. Set the policy to `alwaysPrompt` to restore confirmation for every call. Every MCP invocation is audited with its tool, declared client, and target connection; input details pass through the same credential redaction and command/body truncation used by native tools. Passwords, private keys, and passphrases in SecretStorage never enter MCP results; approved remote output, file or log content, and process details are handled under the selected client and model provider's privacy terms.
+
+> **TRAE on macOS:** always use the generated configuration. Manually entering the TRAE Helper path can fail when the path contains spaces.
+
+After an extension reload, an existing configuration reconnects automatically when only one All in One SSH Studio window is providing MCP tools. If several workspace windows are active, copy the configuration again from the intended window.
+
 ### Deployment Example
 
 ```
@@ -143,15 +160,19 @@ Copilot will break it down as: `#sshExec backup` → `#sftpUpload jar` → `#sft
 | Data Type | Storage Location |
 |---|---|
 | Host / port / username / groups / ProxyJump references | `connections.json` (VS Code `globalStorage`) — plain JSON text, readable only on the local machine, **never written to `~/.ssh`** |
-| Password / private key content / passphrase | **VS Code SecretStorage** (macOS Keychain · Windows Credential Vault · Linux libsecret) |
+| Password / private key content / passphrase / privilege-escalation password / GeoIP API key | **VS Code SecretStorage** (macOS Keychain · Windows Credential Vault · Linux libsecret) |
 | Host fingerprints | `known_hosts.json` (also in `globalStorage`); written on first TOFU trust, and changes trigger an explicit dialog |
 | Local cache of remote files | `cache/` subdirectory or `rss.editor.tempDir`, local only |
+| Operation audit log | `audit/` in `globalStorage`, local JSONL with configurable retention; command bodies, LM file content, and interactive input are not persisted |
+| MCP local service data | `mcp/` in `globalStorage`; contains local connection information and a rotating authorization token, with no SSH credentials |
 
 ### Outbound Network Traffic
 
 - The extension itself **does not report any telemetry** and does not send any data to the author's servers.
 - SSH / SFTP traffic goes **only** to the hosts you configure yourself (or through the jump hosts you configure yourself).
-- The only possible third-party request is **GeoIP resolution** in Port Monitor (disabled by default); when enabled, only the peer public IPs from the ESTABLISHED list are sent to the provider you choose.
+- **GeoIP resolution** is disabled by default. When enabled, only peer public IPs from the ESTABLISHED list are sent to the provider you choose; API keys are stored in SecretStorage.
+- **External MCP access** is disabled by default, and VS Code Copilot defaults to the native tool channel. When MCP is enabled, communication between the extension and the MCP client stays on the local machine; the selected client and its model provider determine where approved tool results are sent.
+- When you invoke a Copilot Chat tool, its result can include connection metadata, remote command output, file or log content, process details, and login records. VS Code passes that result to your selected language-model provider under that provider's privacy terms. The extension does not operate a separate relay or author-owned backend.
 
 ### Import / Export of Configuration
 
@@ -160,8 +181,8 @@ Use ☁⏫ / ☁⏬ in the title bar of the **Connections** panel to export / im
 | Mode | Description |
 |---|---|
 | **Encrypted Export (Recommended)** | PBKDF2-SHA256 (200k iterations) key derivation + AES-256-GCM; importing requires the same passphrase; tampered files fail to decrypt |
-| **Structure Only** | Exports only the host list + group hierarchy, **without any credentials**, suitable for team sharing |
-| **Plaintext Export** | Requires modal confirmation; for short-term local debugging only |
+| **Structure Only** | Exports connection metadata, group hierarchy, snippets, port-forward definitions, and log bookmarks **without credentials**. Review hostnames, usernames, notes, paths, and commands before sharing |
+| **Plaintext Export** | Requires modal confirmation; for temporary local use only and should be deleted immediately afterwards |
 
 When importing, all IDs are reassigned, and **existing connections are never overwritten**; ProxyJump references are rewritten based on the new mapping.
 
@@ -272,7 +293,6 @@ All settings are available in VS Code Settings → search for **All in One SSH S
 | `rss.network.refreshInterval` | number | `3` | Refresh interval of Port Monitor (seconds) |
 | `rss.transfer.maxConcurrent` | number | `4` | Maximum concurrency of the transfer queue |
 | `rss.geoip.provider` | enum (`none`\|`ip-api`\|`ipinfo`\|`custom`) | `none` | GeoIP provider for Port Monitor |
-| `rss.geoip.apiKey` | string | `""` | API key for the GeoIP provider |
 | `rss.geoip.urlTemplate` | string | `""` | Custom GeoIP URL template with `{ip}` and `{key}` placeholders |
 | `rss.geoip.fieldMap` | object | `{country,region,city,org}` | Mapping of custom GeoIP response fields (dot-path syntax) |
 | `rss.audit.retentionDays` | number | `30` | Retention period of the operation audit log in days |
@@ -288,6 +308,11 @@ All settings are available in VS Code Settings → search for **All in One SSH S
 | `rss.alerts.disk.threshold` | number | `85` | Disk usage alert threshold (%) using the highest value across all mount points |
 | `rss.alerts.load.threshold` | number | `2.0` | System load threshold (1-minute load / CPU core count, default 2.0×) |
 | `rss.alerts.swap.threshold` | number | `50` | Swap usage alert threshold (%) |
+| `rss.mcp.enabled` | boolean | `false` | Allow external MCP clients such as Cursor and TRAE to use the extension's tools |
+| `rss.copilot.toolChannel` | `native` / `mcp` / `both` | `native` | Select how VS Code Copilot accesses the tools; `native` is recommended, while `both` may show duplicate tools |
+| `rss.mcp.confirmationPolicy` | `riskBased` / `alwaysPrompt` | `riskBased` | Choose whether the extension adds confirmation for every MCP call or only for state-changing and destructive operations |
+
+Set or clear a GeoIP API key with **All in One SSH Studio: Securely Set GeoIP API Key…** in the Command Palette. The value is stored in VS Code SecretStorage and is not written to `settings.json`.
 
 ### `settings.json` Example
 
@@ -311,6 +336,7 @@ All settings are available in VS Code Settings → search for **All in One SSH S
 | `All in One SSH Studio: Import / Export Connection Configuration` | Configuration migration |
 | `All in One SSH Studio: Open Terminal` / `Open SFTP Explorer` | Interact with connected sessions |
 | `All in One SSH Studio: Check Remote Dependencies` | Remote dependency health check |
+| `All in One SSH Studio: Copy MCP Client Configuration` | Copy the MCP configuration for this workspace for use in Cursor, TRAE, or another MCP client |
 
 ---
 
