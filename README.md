@@ -132,7 +132,11 @@ Cursor, TRAE, and other MCP clients can use the same complete set of SSH tools a
 3. Paste the copied `mcpServers` object into the target client's MCP configuration and keep this extension window open while using the tools.
 4. To make VS Code Copilot use MCP tools, set `rss.copilot.toolChannel` to `mcp`. Keep the default `native` mode to avoid duplicate tools; `both` may show the same tools twice.
 
-With the default `rss.mcp.confirmationPolicy=riskBased`, approval for read-only non-destructive tools is left to Copilot, Cursor, or TRAE without an additional extension modal. State-changing or destructive tools such as command execution, writes, transfers, KILL, interactive input, and terminal snippets still require extension confirmation and reuse the native tool's command, path, PID, and other operation details. Set the policy to `alwaysPrompt` to restore confirmation for every call. Every MCP invocation is audited with its tool, declared client, and target connection; input details pass through the same credential redaction and command/body truncation used by native tools. Passwords, private keys, and passphrases in SecretStorage never enter MCP results; approved remote output, file or log content, and process details are handled under the selected client and model provider's privacy terms.
+With the default `rss.mcp.confirmationPolicy=riskBased`, approval for read-only non-destructive tools is left to Copilot, Cursor, or TRAE without an additional extension modal. State-changing or destructive tools such as command execution, writes, transfers, KILL, interactive input, and terminal snippets still require extension confirmation and show command, path, PID, and other operation details. Set the policy to `alwaysPrompt` to show extension confirmation for every call.
+
+Advanced users can select the high-risk `clientApprovalOnly` policy. The extension shows a risk acknowledgement when this policy is first selected; after acceptance, it no longer confirms any MCP operation. Approval then depends entirely on the MCP client and its configuration, which may be configured to allow tools automatically. You accept responsibility for this risk. This policy does not bypass dangerous-command blocking, protected paths, workspace trust, input validation, SecretStorage, or auditing; those safeguards remain active, and Cursor, TRAE, or another client may still show its own approval prompt.
+
+Every MCP invocation is audited with its tool, declared client, and target connection; input details pass through the same credential redaction and command/body truncation used by native tools. Passwords, private keys, and passphrases in SecretStorage never enter MCP results; approved remote output, file or log content, and process details are handled under the selected client and model provider's privacy terms.
 
 > **TRAE on macOS:** always use the generated configuration. Manually entering the TRAE Helper path can fail when the path contains spaces.
 
@@ -310,7 +314,7 @@ All settings are available in VS Code Settings → search for **All in One SSH S
 | `rss.alerts.swap.threshold` | number | `50` | Swap usage alert threshold (%) |
 | `rss.mcp.enabled` | boolean | `false` | Allow external MCP clients such as Cursor and TRAE to use the extension's tools |
 | `rss.copilot.toolChannel` | `native` / `mcp` / `both` | `native` | Select how VS Code Copilot accesses the tools; `native` is recommended, while `both` may show duplicate tools |
-| `rss.mcp.confirmationPolicy` | `riskBased` / `alwaysPrompt` | `riskBased` | Choose whether the extension adds confirmation for every MCP call or only for state-changing and destructive operations |
+| `rss.mcp.confirmationPolicy` | `riskBased` / `alwaysPrompt` / `clientApprovalOnly` | `riskBased` | Control extension-level MCP confirmation; `clientApprovalOnly` disables it entirely and relies on client configuration at your own risk |
 
 Set or clear a GeoIP API key with **All in One SSH Studio: Securely Set GeoIP API Key…** in the Command Palette. The value is stored in VS Code SecretStorage and is not written to `settings.json`.
 

@@ -132,7 +132,11 @@ Cursor、TRAE 及其他 MCP 客户端可以使用与 GitHub Copilot Chat 相同�
 3. 把复制出的 `mcpServers` 对象粘贴到目标客户端的 MCP 配置中；使用工具期间请保持当前插件窗口打开。
 4. 如需让 VS Code Copilot 使用 MCP 工具，把 `rss.copilot.toolChannel` 设为 `mcp`。建议保留默认的 `native` 以避免工具重复；`both` 可能让同一工具出现两次。
 
-默认的 `rss.mcp.confirmationPolicy=riskBased` 会把只读、非破坏性工具的审批交给 Copilot、Cursor 或 TRAE 自身，不额外显示扩展模态框；命令执行、写入、上传下载、KILL、交互输入和终端片段等状态变更或破坏性工具仍由扩展强制确认，并复用原生工具的命令、路径、PID 等操作详情。设为 `alwaysPrompt` 可恢复每次调用都二次确认。所有 MCP 调用都会按工具、客户端声明和目标连接写入审计，参数复用原生工具的凭证脱敏与命令/正文截断规则；SecretStorage 中的密码、私钥和 passphrase 不会进入 MCP 结果。远端输出、文件/日志内容、进程详情等获准结果会按所选客户端及模型提供方的隐私策略处理。
+默认的 `rss.mcp.confirmationPolicy=riskBased` 会把只读、非破坏性工具的审批交给 Copilot、Cursor 或 TRAE 自身，不额外显示插件模态框；命令执行、写入、上传下载、KILL、交互输入和终端片段等状态变更或破坏性工具仍由插件强制确认，并展示命令、路径、PID 等操作详情。设为 `alwaysPrompt` 可让每次调用都显示插件确认。
+
+高级用户可选择高风险的 `clientApprovalOnly`。首次选择时插件会显示风险确认；接受后，插件不再为任何 MCP 操作弹出确认，是否审批完全取决于 MCP 客户端及其配置，客户端也可能被配置为自动允许。由此产生的风险由用户自行承担。该选项不会绕过危险命令黑名单、受保护路径、工作区信任、参数校验、SecretStorage 或审计；这些安全护栏始终生效，Cursor、TRAE 或其他客户端仍可能显示自己的审批提示。
+
+所有 MCP 调用都会按工具、客户端声明和目标连接写入审计，参数复用原生工具的凭证脱敏与命令/正文截断规则；SecretStorage 中的密码、私钥和 passphrase 不会进入 MCP 结果。远端输出、文件/日志内容、进程详情等获准结果会按所选客户端及模型提供方的隐私策略处理。
 
 > **macOS 上的 TRAE：**请始终使用插件生成的配置。手工填写 TRAE Helper 路径时，路径中的空格可能导致启动失败。
 
@@ -310,7 +314,7 @@ VS Code 端不会向远端推送任何 binary，所以远端必须自带：`ss /
 | `rss.alerts.swap.threshold` | number | `50` | Swap 使用率告警阈值（%） |
 | `rss.mcp.enabled` | boolean | `false` | 允许 Cursor、TRAE 等外部 MCP 客户端使用插件工具 |
 | `rss.copilot.toolChannel` | `native` / `mcp` / `both` | `native` | 选择 VS Code Copilot 使用工具的方式；推荐 `native`，`both` 可能显示重复工具 |
-| `rss.mcp.confirmationPolicy` | `riskBased` / `alwaysPrompt` | `riskBased` | 选择插件是为每次 MCP 调用追加确认，还是仅确认状态变更和破坏性操作 |
+| `rss.mcp.confirmationPolicy` | `riskBased` / `alwaysPrompt` / `clientApprovalOnly` | `riskBased` | 控制插件层 MCP 确认；`clientApprovalOnly` 关闭全部插件确认，仅依赖客户端配置，风险由用户自行承担 |
 
 通过命令面板执行「All in One SSH Studio: 安全设置 GeoIP API Key…」来设置或清除 Key；值由 VS Code SecretStorage 保存，不会写入 `settings.json`。
 
