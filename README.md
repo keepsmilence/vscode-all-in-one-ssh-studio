@@ -4,9 +4,7 @@
 
 An all-in-one SSH client inside VS Code: connection management, SFTP browsing, remote editing, system/network/process monitoring, port forwarding, plus integration with GitHub Copilot Chat and external MCP clients.
 
-> No binaries are pushed to the remote host, no telemetry is reported, and nothing is written to `~/.ssh`. All destructive operations always require a second confirmation.
-
-The sidebar, dialogs, and all feature panels follow the VS Code display language. English and Simplified Chinese are supported throughout the runtime UI.
+> No binaries are pushed to the remote host, no telemetry is reported, and nothing is written to `~/.ssh`. By default, destructive operations require a second confirmation.
 
 ---
 
@@ -16,8 +14,6 @@ The sidebar, dialogs, and all feature panels follow the VS Code display language
 2. Fill in host / port / username / authentication (password · private key · SSH Agent), then click **Test Connection** to validate it (this does not write any configuration).
 3. After validation succeeds, save and connect. Once connected, the **Dashboard** and **Toolbox** on the right become available automatically.
 
-For jump-host scenarios: first configure the already-whitelisted host as a normal connection, then select it from the target connection's **Advanced → Jump Host (ProxyJump)** dropdown. Multi-hop nesting is supported (A→B→C).
-
 ---
 
 ## Views and Entry Points
@@ -26,7 +22,7 @@ After opening **All in One SSH Studio** in the Activity Bar, you will see 5 pane
 
 | Panel | Purpose |
 |---|---|
-| **Connections** | Supports multi-level grouping, create / edit / connect / disconnect; connection configuration data can be imported and exported; the **Disconnect** item in the context menu requires confirmation |
+| **Connections** | Supports multi-level grouping, create / edit / connect / disconnect; connection configuration data can be imported and exported; the **Disconnect** item in the context menu requires confirmation. For jump-host or private-network scenarios, configure the relay host as a normal connection, then select it under **Advanced → Jump Host (ProxyJump)** on the target connection; multi-hop nesting (A→B→C) is supported |
 | **Active Sessions** | Current active sessions, with support for disconnecting (with confirmation) / creating a new SSH terminal / opening the SFTP browser |
 | **Dashboard** | Displays **CPU / Memory / Network / Disk / System Info** in sections inside a single panel; CPU and memory each have independent sections with 5-minute mini sparkline trends; progress bars change color by threshold (warn ≥75% / crit ≥90%) |
 | **Toolbox** | Card-style unified entry point that organizes all feature panels below into two major groups (related to active sessions) |
@@ -137,8 +133,6 @@ With the default `rss.mcp.confirmationPolicy=riskBased`, approval for read-only 
 Advanced users can select the high-risk `clientApprovalOnly` policy. The extension shows a risk acknowledgement when this policy is first selected; after acceptance, it no longer confirms any MCP operation. Approval then depends entirely on the MCP client and its configuration, which may be configured to allow tools automatically. You accept responsibility for this risk. This policy does not bypass dangerous-command blocking, protected paths, workspace trust, input validation, SecretStorage, or auditing; those safeguards remain active, and Cursor, TRAE, or another client may still show its own approval prompt.
 
 Every MCP invocation is audited with its tool, declared client, and target connection; input details pass through the same credential redaction and command/body truncation used by native tools. Passwords, private keys, and passphrases in SecretStorage never enter MCP results; approved remote output, file or log content, and process details are handled under the selected client and model provider's privacy terms.
-
-> **TRAE on macOS:** always use the generated configuration. Manually entering the TRAE Helper path can fail when the path contains spaces.
 
 After an extension reload, an existing configuration reconnects automatically when only one All in One SSH Studio window is providing MCP tools. If several workspace windows are active, copy the configuration again from the intended window.
 
@@ -282,6 +276,7 @@ All settings are available in VS Code Settings → search for **All in One SSH S
 
 | Setting Key | Type | Default | Description |
 |---|---|---|---|
+| `rss.displayLanguage` | `auto` / `zh-cn` / `en` | `auto` | Language for extension-owned UI and runtime messages; reload the window after changing it. Sidebar view titles switch after activation; command, menu, and native Settings titles still follow the editor language; external MCP tool metadata remains English |
 | `rss.storage.location` | enum (`global`\|`workspace`) | `global` | Storage location of the connection configuration file; never written to `~/.ssh` |
 | `rss.editor.tempDir` | string | `""` | Local cache directory for remote files; if empty, `cache/` under extension storage is used |
 | `rss.sftp.concurrency` | number | `4` | Number of concurrent SFTP tasks |
@@ -322,6 +317,7 @@ Set or clear a GeoIP API key with **All in One SSH Studio: Securely Set GeoIP AP
 
 ```jsonc
 {
+  "rss.displayLanguage": "auto",
   "rss.dashboard.refreshInterval": 5,
   "rss.network.refreshInterval": 2,
   "rss.geoip.provider": "ip-api",
