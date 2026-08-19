@@ -23,7 +23,7 @@ VS Code 内的一站式 SSH 客户端：连接管理、SFTP 浏览、远程编�
 | 面板 | 用途 |
 |---|---|
 | **连接** | 支持多级分组，新建 / 编辑 / 连接 / 断开；连接配置数据支持导入导出；右键菜单的「断开」带二次确认。跳板机 / 内网场景可先把中转主机配置为普通连接，再在目标连接「高级 → 跳板机（ProxyJump）」中选择，支持多级嵌套（A→B→C） |
-| **活动会话** | 当前活动会话，支持断开连接（带二次确认） / 新建SSH终端 / 打开SFTP游览器 |
+| **活动会话** | 当前活动会话，支持断开连接（带二次确认） / 新建 SSH 终端 / 打开 SFTP 游览器；双击会话可同时切换仪表盘和工具集的当前会话 |
 | **仪表盘** | 单面板内分块展示「CPU / 内存 / 网络 / 磁盘 / 系统信息」；CPU 与内存独立分块带 5 分钟 mini sparkline 走势；进度条按阈值（warn ≥75% / crit ≥90%）变色 |
 | **工具集** | 卡片式聚合入口，按下面两大类组织所有功能面板（活动会话相关） |
 | **插件管理** | 全局工具入口，与会话生命周期解耦：插件使用说明 / 待办任务管理 / 操作审计日志 |
@@ -70,7 +70,7 @@ VS Code 内的一站式 SSH 客户端：连接管理、SFTP 浏览、远程编�
 
 ## SSH 终端
 
-集成 xterm；启用「终端目录联动」后，终端中 `cd` 会通过 OSC 7 同步 SFTP 资源管理器目录（默认关闭，可在 SFTP 面板或设置中开启）。
+集成 xterm；「终端目录联动」默认开启，终端中 `cd` 会通过 OSC 7 同步 SFTP 资源管理器目录，可在 SFTP 面板中临时关闭或在设置中全局关闭。
 
 ## 自动账号切换（连接级）
 
@@ -286,7 +286,7 @@ VS Code 端不会向远端推送任何 binary，所以远端必须自带：`ss /
 | `rss.sftp.deleteUseShellRm` | boolean | `false` | 删除文件夹时使用远端 shell 的 `rm -rf` 一次性删除（仅 1 次往返，远程大目录性能显著提升） |
 | `rss.sftp.writeConfirm` | boolean | `false` | 编辑 `rss-sftp://` 在线文件时手动保存（Ctrl+S）前弹出确认，防止误操作覆盖远端文件 |
 | `rss.terminal.defaultShell` | string | `""` | 远程终端启动时使用的 shell；留空使用服务器默认 |
-| `rss.terminal.syncCwd` | boolean | `false` | 通过 OSC 7 把终端 cwd 同步到 SFTP 面板；默认关闭，可在 SFTP 面板中临时切换 |
+| `rss.terminal.syncCwd` | boolean | `true` | 通过 OSC 7 把终端 cwd 同步到 SFTP 面板；默认开启，可在 SFTP 面板中临时切换 |
 | `rss.dashboard.refreshInterval` | number | `5` | 仪表盘自动刷新间隔（秒） |
 | `rss.process.refreshInterval` | number | `3` | 进程管理器刷新间隔（秒） |
 | `rss.network.refreshInterval` | number | `3` | 端口监控刷新间隔（秒） |
@@ -321,7 +321,7 @@ VS Code 端不会向远端推送任何 binary，所以远端必须自带：`ss /
   "rss.dashboard.refreshInterval": 5,
   "rss.network.refreshInterval": 2,
   "rss.geoip.provider": "ip-api",
-  "rss.terminal.syncCwd": false
+  "rss.terminal.syncCwd": true
 }
 ```
 

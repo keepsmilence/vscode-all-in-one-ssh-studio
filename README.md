@@ -23,7 +23,7 @@ After opening **All in One SSH Studio** in the Activity Bar, you will see 5 pane
 | Panel | Purpose |
 |---|---|
 | **Connections** | Supports multi-level grouping, create / edit / connect / disconnect; connection configuration data can be imported and exported; the **Disconnect** item in the context menu requires confirmation. For jump-host or private-network scenarios, configure the relay host as a normal connection, then select it under **Advanced → Jump Host (ProxyJump)** on the target connection; multi-hop nesting (A→B→C) is supported |
-| **Active Sessions** | Current active sessions, with support for disconnecting (with confirmation) / creating a new SSH terminal / opening the SFTP browser |
+| **Active Sessions** | Current active sessions, with support for disconnecting (with confirmation) / creating a new SSH terminal / opening the SFTP browser; double-click a session to switch both Dashboard and Toolbox to it |
 | **Dashboard** | Displays **CPU / Memory / Network / Disk / System Info** in sections inside a single panel; CPU and memory each have independent sections with 5-minute mini sparkline trends; progress bars change color by threshold (warn ≥75% / crit ≥90%) |
 | **Toolbox** | Card-style unified entry point that organizes all feature panels below into two major groups (related to active sessions) |
 | **Plugin Management** | Global tools entry point, decoupled from the session lifecycle: plugin usage guide / to-do management / operation audit log |
@@ -70,7 +70,7 @@ After opening **All in One SSH Studio** in the Activity Bar, you will see 5 pane
 
 ## SSH Terminal
 
-Integrated xterm; when **Terminal Directory Sync** is enabled, running `cd` in the terminal syncs the SFTP explorer directory via OSC 7 (disabled by default and available from the SFTP panel or settings).
+Integrated xterm; **Terminal Directory Sync** is enabled by default, so running `cd` in the terminal syncs the SFTP explorer directory via OSC 7. It can be disabled temporarily in the SFTP panel or globally in settings.
 
 ## Automatic Account Switching (Per Connection)
 
@@ -286,7 +286,7 @@ All settings are available in VS Code Settings → search for **All in One SSH S
 | `rss.sftp.deleteUseShellRm` | boolean | `false` | When deleting a folder, use the remote shell command `rm -rf` to remove it in one shot (only one round trip, significantly faster for large remote directories) |
 | `rss.sftp.writeConfirm` | boolean | `false` | When editing an online file via `rss-sftp://`, show a confirmation before manual save (`Ctrl+S`) to avoid accidentally overwriting the remote file |
 | `rss.terminal.defaultShell` | string | `""` | Shell used when starting the remote terminal; if empty, the server default is used |
-| `rss.terminal.syncCwd` | boolean | `false` | Sync terminal cwd to the SFTP panel via OSC 7; disabled by default and can be toggled temporarily in the SFTP panel |
+| `rss.terminal.syncCwd` | boolean | `true` | Sync terminal cwd to the SFTP panel via OSC 7; enabled by default and can be toggled temporarily in the SFTP panel |
 | `rss.dashboard.refreshInterval` | number | `5` | Auto-refresh interval of the dashboard (seconds) |
 | `rss.process.refreshInterval` | number | `3` | Refresh interval of Process Management (seconds) |
 | `rss.network.refreshInterval` | number | `3` | Refresh interval of Port Monitor (seconds) |
@@ -321,7 +321,7 @@ Set or clear a GeoIP API key with **All in One SSH Studio: Securely Set GeoIP AP
   "rss.dashboard.refreshInterval": 5,
   "rss.network.refreshInterval": 2,
   "rss.geoip.provider": "ip-api",
-  "rss.terminal.syncCwd": false
+  "rss.terminal.syncCwd": true
 }
 ```
 
