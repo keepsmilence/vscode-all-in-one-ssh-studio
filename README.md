@@ -22,17 +22,19 @@ After opening **All in One SSH Studio** in the Activity Bar, you will see 5 pane
 
 | Panel | Purpose |
 |---|---|
-| **Connections** | Supports multi-level grouping, create / edit / connect / disconnect; connection configuration data can be imported and exported; the **Disconnect** item in the context menu requires confirmation. For jump-host or private-network scenarios, configure the relay host as a normal connection, then select it under **Advanced → Jump Host (ProxyJump)** on the target connection; multi-hop nesting (A→B→C) is supported |
-| **Active Sessions** | Current active sessions, with support for disconnecting (with confirmation) / creating a new SSH terminal / opening the SFTP browser; double-click a session to switch both Dashboard and Toolbox to it |
+| **Connections** | Supports multi-level grouping, create / edit / connect / disconnect; connection configuration data can be imported and exported; context menus can copy the connection name for Copilot prompts, while **Disconnect** requires confirmation. For jump-host or private-network scenarios, configure the relay host as a normal connection, then select it under **Advanced → Jump Host (ProxyJump)** on the target connection; multi-hop nesting (A→B→C) is supported |
+| **Active Sessions** | Current active sessions, with support for disconnecting (with confirmation) / creating a new SSH terminal / opening the SFTP browser / copying the session name; double-click a session to switch both Dashboard and Toolbox to it |
 | **Dashboard** | Displays **CPU / Memory / Network / Disk / System Info** in sections inside a single panel; CPU and memory each have independent sections with 5-minute mini sparkline trends; progress bars change color by threshold (warn ≥75% / crit ≥90%) |
 | **Toolbox** | Card-style unified entry point that organizes all feature panels below into two major groups (related to active sessions) |
 | **Plugin Management** | Global tools entry point, decoupled from the session lifecycle: plugin usage guide / to-do management / operation audit log |
+
+The first-run sidebar layout gives **Connections** and **Active Sessions** compact initial weights while prioritizing **Dashboard** and **Toolbox** space. VS Code preserves manual view resizing, so existing profiles keep their saved proportions.
 
 ### Toolbox · Resource Management
 
 | Card | Description |
 |---|---|
-| **SFTP Browser** | Browse / upload / download / rename / delete; supports multi-select from the VS Code Explorer and drag into the current remote directory; multi-select (`Ctrl/Cmd` toggle, `Shift` range) + right-click bulk delete / bulk download; delete confirmation + parent directory write-permission check; one-time decision for same-name conflicts in bulk operations (overwrite all / skip all / keep both for all / ask one by one); **right-click menu** (Enter Directory / Open in Terminal / Copy Path); `rss.sftp.writeConfirm` can enable a confirmation before saving online files |
+| **SFTP Browser** | Browse / upload / download / rename / delete; supports multi-select from the VS Code Explorer and drag into the current remote directory; stable draggable file-list columns persist as responsive proportions; multi-select (`Ctrl/Cmd` toggle, `Shift` range) + right-click bulk delete / bulk download; confirmed **one-click backup** for a single item (`.backup_YYYYMMDD` for files, `_backup_YYYYMMDD` for directories; existing same-day targets are not overwritten); delete confirmation + parent directory write-permission check; one-time decision for same-name conflicts in bulk operations (overwrite all / skip all / keep both for all / ask one by one); **right-click menu** (Enter Directory / Open in Terminal / Copy Path / Refresh, including blank areas); `rss.sftp.writeConfirm` can enable a confirmation before saving online files |
 | **Command Snippets** | Global and connection-bound command templates; card-grid view + modal details / editing; shows global snippets and snippets for the current connection; actions: view details / edit / copy / fill into terminal / fill and execute / reset usage count / delete; dangerous commands are blocked by the whitelist |
 | **Port Forwarding** | Supports both local→remote and remote→local modes; table shows status / current concurrency / cumulative upstream and downstream bytes; port conflicts are detected automatically; can inspect the remote process corresponding to the source port |
 | **Log Viewer** | Bookmark remote log paths (supports template variables such as dates); **Realtime Mode** (`tail -F`, ring buffer, can pause / resume / clear) and **Paged Mode** (page by byte offset, no full-file scan required for large files); keyword search (`grep -bnF`) + `n/N` navigation; frontend syntax highlighting (timestamp / log level / JSON key / IP / URL); multi-tab support |
@@ -64,7 +66,7 @@ After opening **All in One SSH Studio** in the Activity Bar, you will see 5 pane
 | Card | Description |
 |---|---|
 | **Plugin Usage Guide** | View the plugin usage guide and feature overview (the welcome page) |
-| **Operation Audit Log** | Persists every terminal / panel / Copilot tool invocation in JSONL; 4+1 tabs (All / Terminal / Panel / Copilot / Errors); supports filtering by date / connection / keyword; supports realtime mode, export, and clear; retention period is configurable |
+| **Operation Audit Log** | Persists every terminal / panel / Copilot tool invocation in JSONL; 4+1 tabs (All / Terminal / Panel / Copilot / Errors); supports filtering by date / connection / keyword and hides structured dashboard / process / port / alert heartbeat records by default; realtime mode and JSONL export honor the active filters; supports clear and configurable retention |
 
 ---
 
