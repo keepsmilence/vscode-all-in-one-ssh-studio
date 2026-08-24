@@ -12,7 +12,7 @@ VS Code 内的一站式 SSH 客户端：连接管理、SFTP 浏览、远程编�
 
 1. 左侧活动栏点击 **All in One SSH Studio** 图标 → 「连接」面板 → 标题栏 **＋** 新建连接。
 2. 填写主机 / 端口 / 用户名 / 认证（密码 · 私钥 · SSH Agent），点 **「测试连接」** 验证（不会写任何配置）。
-3. 通过后保存并连接；连接成功后右侧的「仪表盘」与「工具集」自动可用。
+3. 通过后保存连接，双击该连接（或在右键菜单选择「连接」）；新活动会话创建成功后，「仪表盘」与「工具集」自动切换到该会话。
 
 ---
 
@@ -22,17 +22,19 @@ VS Code 内的一站式 SSH 客户端：连接管理、SFTP 浏览、远程编�
 
 | 面板 | 用途 |
 |---|---|
-| **连接** | 支持多级分组，新建 / 编辑 / 连接 / 断开；连接配置数据支持导入导出；右键菜单的「断开」带二次确认。跳板机 / 内网场景可先把中转主机配置为普通连接，再在目标连接「高级 → 跳板机（ProxyJump）」中选择，支持多级嵌套（A→B→C） |
-| **活动会话** | 当前活动会话，支持断开连接（带二次确认） / 新建 SSH 终端 / 打开 SFTP 游览器；双击会话可同时切换仪表盘和工具集的当前会话 |
-| **仪表盘** | 单面板内分块展示「CPU / 内存 / 网络 / 磁盘 / 系统信息」；CPU 与内存独立分块带 5 分钟 mini sparkline 走势；进度条按阈值（warn ≥75% / crit ≥90%）变色 |
+| **连接** | 支持多级分组，新建 / 编辑 / 连接 / 断开；双击连接创建新活动会话后，仪表盘与工具集自动切换到该会话；再次双击已连接项目只切换当前会话，不重复打开终端或 SFTP 标签页；连接配置数据支持导入导出；右键菜单可复制连接名称，便于粘贴到 Copilot，「断开」带二次确认。跳板机 / 内网场景可先把中转主机配置为普通连接，再在目标连接「高级 → 跳板机（ProxyJump）」中选择，支持多级嵌套（A→B→C） |
+| **活动会话** | 当前活动会话，支持断开连接（带二次确认） / 新建 SSH 终端 / 打开 SFTP 游览器 / 复制会话名称；双击会话可同时切换仪表盘和工具集的当前会话 |
+| **仪表盘** | 单面板内分块展示「CPU / 内存 / 网络 / 磁盘 / 系统信息」；系统信息包含服务器当前时间、时区，以及可识别时的物理机 / 虚拟机 / 容器运行环境；CPU 与内存独立分块带 5 分钟 mini sparkline 走势；进度条按阈值（warn ≥75% / crit ≥90%）变色 |
 | **工具集** | 卡片式聚合入口，按下面两大类组织所有功能面板（活动会话相关） |
 | **插件管理** | 全局工具入口，与会话生命周期解耦：插件使用说明 / 待办任务管理 / 操作审计日志 |
+
+首次显示时，侧边栏会让「连接」和「活动会话」使用较小的初始高度权重，优先把空间留给「仪表盘」和「工具集」。VS Code 会保留用户手动拖拽后的视图比例，因此已有配置继续使用已保存的高度。
 
 ### 工具集 · 资源管理
 
 | 卡片 | 说明 |
 |---|---|
-| **SFTP 游览器** | 浏览 / 上传 / 下载 / 改名 / 删除；支持从 VS Code 资源管理器多选并拖入当前远端目录；多选（Ctrl/Cmd 切换、Shift 范围）+ 右键批量删除 / 批量下载；删除二次确认 + 父目录写权限检查；批量同名一次性决策（全覆盖 / 全跳过 / 全保留两者 / 逐个询问）；**右键菜单**（进入目录 / 在终端中打开 / 复制路径）；`rss.sftp.writeConfirm` 可开启在线文件保存前二次确认 |
+| **SFTP 游览器** | 浏览 / 上传 / 下载 / 改名 / 删除；支持从 VS Code 资源管理器多选并拖入当前远端目录；文件列表列宽可稳定拖动并按响应式比例持久化；多选（Ctrl/Cmd 切换、Shift 范围）+ 右键批量删除 / 批量下载；单个项目支持确认后**一键备份**（文件后缀 `.backup_YYYYMMDD`，目录后缀 `_backup_YYYYMMDD`；同日目标已存在时不会覆盖）；删除二次确认 + 父目录写权限检查；批量同名一次性决策（全覆盖 / 全跳过 / 全保留两者 / 逐个询问）；**右键菜单**（进入目录 / 在终端中打开 / 复制路径 / 刷新，支持空白区域）；`rss.sftp.writeConfirm` 可开启在线文件保存前二次确认 |
 | **命令片段** | 全局 / 按连接绑定的命令模板；卡片网格视图 + 弹窗详情 / 编辑；展示全局与当前连接的片段；操作：查看详情 / 编辑 / 复制 / 填入终端 / 填入并执行 / 重置使用计数 / 删除；危险命令受白名单拦截 |
 | **端口转发** | local→remote / remote→local 两种模式；表格展示状态 / 当前并发 / 上下行字节累计；端口冲突自动探测；查源端口对应远端进程 |
 | **日志查看** | 收藏远端日志路径（支持模板变量如日期）；**实时模式**（tail -F，ring-buffer，可暂停 / 继续 / 清空）与 **分页模式**（字节偏移翻页，大文件无需全文扫描）；关键词搜索（grep -bnF）+ n/N 跳转；前端语法着色（时间戳 / 日志级别 / JSON Key / IP / URL）；多标签页 |
@@ -43,7 +45,7 @@ VS Code 内的一站式 SSH 客户端：连接管理、SFTP 浏览、远程编�
 
 | 卡片 | 说明 |
 |---|---|
-| **进程管理** | 列表 + 排序指示 + 过滤 + 4 Tab 详情（概要 / 环境变量 / 文件描述符 / 内核堆栈）；详情面板可拖动调高；支持 KILL 进程 |
+| **进程管理** | 可切换排序列表、PPID 父子树和角色分类视图；分类 / 树形展开控件使用固定槽位对齐，树形 PID 按层级左对齐缩进；一键筛选带可解释原因的敏感 / 高风险线索；5 Tab 详情（概要 / 环境变量 / 文件描述符 / 端口 / 内核堆栈），仅打开「端口」页签时才按 PID 采集端口 / 套接字关联；支持二次确认后 KILL 进程 |
 | **端口监控** | 监听端口 + ESTABLISHED 双面板，可拖拽调整布局；列可排序、双击打开 GeoIP 详情 |
 | **命令历史** | 汇总当前用户的 shell / REPL 历史（bash / zsh / fish / sh / python / node / mysql / psql / sqlite / redis），按时间倒序；每行可一键复制或发送到当前终端 |
 | **服务管理** | systemd 服务列表（服务名 / 状态 / 开机启动）；行点击下方 tail journal；启动 / 停止 / 重启 / 启用 / 禁用含确认 |
@@ -51,7 +53,7 @@ VS Code 内的一站式 SSH 客户端：连接管理、SFTP 浏览、远程编�
 | **安全审计** | 五 Tab：当前在线（who/w）、登录历史（last）、失败尝试（lastb）、sshd 失败日志（auth.log/journalctl）、用户与用户组 |
 | **软件与环境** | 四 Tab：已安装包（带搜索）、仓库源（apt/yum/apk/pacman）、环境变量、PATH 命令（按需扫描） |
 | **容器管理** | docker / podman 一致 API；列出全量容器（含已停止）+ 端口映射；详情展示 state/ports/mounts/networks/env；一键复制完整容器 ID、把挂载主机目录直接在 SFTP 中打开；Start/Stop/Restart 与 logs tail 200；兼容 podman 模拟 docker CLI 的提示输出 |
-| **防火墙管理** | **概览**：检测并展示 iptables / ip6tables / nftables / ufw / firewalld / Fail2Ban 安装与运行状态；service 开启停止控制。**iptables / ip6tables**：table（filter/nat/mangle/raw）与 chain 切换；规则表格；高风险（全段 ACCEPT）红色 / 中风险橙色高亮。**nftables**：ruleset 原始输出带风险高亮。**ufw**：编号规则表 + 添加 / 删除规则 + 开启关闭。**firewalld**：zone 列表 + 服务控制 + permanent 重载。**Fail2Ban**：jail 状态 + 封禁 IP 列表 + 一键解禁 |
+| **防火墙管理** | **概览**：检测并展示 iptables / ip6tables / nftables / ufw / firewalld / Fail2Ban 安装与运行状态；service 开启停止控制。**iptables / ip6tables**：table（filter/nat/mangle/raw）与 chain 切换；规则表格；高风险（全段 ACCEPT）红色 / 中风险橙色高亮。**nftables**：ruleset 原始输出带风险高亮。**ufw**：编号规则表独立展示 IPv4/IPv6 与 comment；新增规则支持 comment，添加 / 删除 / 启停均二次确认，启用前提示确认 SSH 和业务端口已放行。**firewalld**：zone 列表 + 服务控制 + permanent 重载。**Fail2Ban**：jail 状态 + 封禁 IP 列表 + 一键解禁 |
 | **资源告警** | 后台轮询 CPU / 内存 / 磁盘 / 负载 / Swap，持续超阈时右下角通知（默认关闭，开启见 `rss.alerts.enabled`）；三层抑制：连续触发次数 · 冷却时间 · 当日不再提醒；通知附带「查看仪表盘」快捷按钮 |
 | **依赖检查** | 一键体检远端 ss/netstat/procps/iproute2 等 9 类必备工具，按发行版给出安装命令 |
 
@@ -91,6 +93,7 @@ VS Code 内的一站式 SSH 客户端：连接管理、SFTP 浏览、远程编�
 | 工具（`#` 引用名） | 说明 |
 |---|---|
 | `#sshListConnections` | 列出 SSH 连接、嵌套分组路径、主/备用地址及用户录入的内外网标签；返回结构化到期状态，临近到期时可主动提醒（不含敏感字段） |
+| `#findActiveConnections` | 按连接名称、服务器 IP 或主/备用主机地址，不区分大小写地精确匹配 ready 会话；返回全部匹配项的 `connectionId` 与命中原因，提示中已指定服务器时可跳过全量连接列表 |
 | `#sshExec` | 在指定连接执行命令；命中危险命令黑名单直接拒绝；默认弹窗二次确认 |
 | `#interactiveStart` / `#interactiveRead` | 以受控 PTY 启动具体交互式管理工具，并按 cursor 增量读取菜单 / 问答输出 |
 | `#interactiveSend` / `#interactiveClose` | 每次确认后发送一行非敏感输入，或终止交互会话；密码 / 口令 / OTP 强制转真实终端 |
@@ -116,7 +119,7 @@ VS Code 内的一站式 SSH 客户端：连接管理、SFTP 浏览、远程编�
 ### 使用方式
 
 1. 在《连接》面板中先连上目标主机；
-2. 打开 Copilot Chat，输入 `#`，在弹出的工具列表中选择 `sshExec` / `sftpList` 等；或直接描述需求让 Copilot 自行选工具；
+2. 打开 Copilot Chat，输入 `#`，在弹出的工具列表中选择 `sshExec` / `sftpList` 等；或直接描述需求让 Copilot 自行选工具。提示中已包含连接名称或服务器 IP 时，`#findActiveConnections` 可直接解析 `connectionId`，无需先列出全部连接；
 3. 破坏性操作会被 VS Code 原生二次确认 UI 拦下来。
 
 ### 外部 MCP 客户端
@@ -171,6 +174,7 @@ Copilot 会拆成：`#sshExec backup` → `#sftpUpload jar` → `#sftpUploadDir 
 - **GeoIP 解析**默认关闭；开启后仅把 ESTABLISHED 列表的对端公网 IP 发给你选定的 provider，API Key 保存在 SecretStorage。
 - **外部 MCP 接入**默认关闭；VS Code Copilot 默认使用原生工具通道。启用 MCP 后，插件与 MCP 客户端之间的通信只在本机进行；获准的工具结果最终发往哪里由所选客户端及其模型提供方决定。
 - 调用 Copilot Chat 工具时，结果可能包含连接元数据、远端命令输出、文件或日志内容、进程详情及登录记录。VS Code 会依据你选择的模型提供方及其隐私条款，把工具结果交给该模型；插件本身不经过作者服务器，也不运行额外中转服务。
+- 进程风险筛选只在本地分析已采集的 `ps` 字段，是带命中原因的只读排查启发式，不代表恶意判定，也不能替代主机 EDR；插件不会自动终止任何命中进程。只有显式打开详情「端口」页签时才会采集 PID 端口关联。
 
 ### 配置导入 / 导出
 
@@ -236,8 +240,8 @@ Copilot 会拆成：`#sshExec backup` → `#sftpUpload jar` → `#sftpUploadDir 
 | 建立 SSH / SFTP | 普通用户 | OpenSSH 标准握手；SFTP 子系统 `ls/stat/open/read/write/mkdir/rename/remove` |
 | Copilot 受控交互 | 取决于已确认命令 | 使用 SSH PTY 执行用户确认的具体管理工具；逐轮非敏感输入均单独确认，不开放通用 shell，不安装远端 agent |
 | 终端 cwd 同步（可关闭） | 普通用户 | `PROMPT_COMMAND` / `precmd` 注入 OSC 7 |
-| 仪表盘 · 系统 / 网络 | 普通用户读 | `uname / uptime`、`/proc/{loadavg,meminfo,cpuinfo,net/dev}`、`df -P`、`ip -s link` 兜底 `ifconfig` |
-| 进程管理 | 普通用户读 · KILL 需相应权限 | `ps -eo …`、`/proc/<pid>/{status,environ,fd,stack}`；KILL 显式二次确认 |
+| 仪表盘 · 系统 / 网络 | 普通用户读 | `uname / uptime / date`、`readlink /etc/localtime`、`systemd-detect-virt`（回退 `virt-what` / macOS `sysctl` / Linux DMI）、`/proc/{loadavg,meminfo,cpuinfo,net/dev}`、`df -P`、`ip -s link` 兜底 `ifconfig` |
+| 进程管理 | 普通用户读 · KILL 需相应权限 | `ps -eo …`、`/proc/<pid>/{status,environ,fd,stack}`；打开「端口」页签时按 PID 执行 `lsof -a -p <pid> -iTCP -iUDP`，无则回退 `ss -tunap` / `netstat -tunap`；KILL 显式二次确认 |
 | 端口监控 | 普通用户 | 优先 `ss -ltnp / -tnp`，兜底 `netstat` |
 | 服务管理 | 启停可能 sudo | `systemctl list-units / show / status`、`journalctl -u …`；启停 / 启用 / 禁用均确认 |
 | 计划任务 | 普通用户 | `crontab -l`、`cat /etc/crontab /etc/cron.d/*`、`systemctl list-timers`、`atq / at -c`，**不修改** |

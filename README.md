@@ -12,7 +12,7 @@ An all-in-one SSH client inside VS Code: connection management, SFTP browsing, r
 
 1. Click the **All in One SSH Studio** icon in the Activity Bar on the left → open the **Connections** panel → click **＋** in the title bar to create a new connection.
 2. Fill in host / port / username / authentication (password · private key · SSH Agent), then click **Test Connection** to validate it (this does not write any configuration).
-3. After validation succeeds, save and connect. Once connected, the **Dashboard** and **Toolbox** on the right become available automatically.
+3. After validation succeeds, save the connection, then double-click it (or use **Connect** from its context menu). When a new active session is created, the **Dashboard** and **Toolbox** automatically switch to it.
 
 ---
 
@@ -22,9 +22,9 @@ After opening **All in One SSH Studio** in the Activity Bar, you will see 5 pane
 
 | Panel | Purpose |
 |---|---|
-| **Connections** | Supports multi-level grouping, create / edit / connect / disconnect; connection configuration data can be imported and exported; context menus can copy the connection name for Copilot prompts, while **Disconnect** requires confirmation. For jump-host or private-network scenarios, configure the relay host as a normal connection, then select it under **Advanced → Jump Host (ProxyJump)** on the target connection; multi-hop nesting (A→B→C) is supported |
+| **Connections** | Supports multi-level grouping, create / edit / connect / disconnect; double-clicking a connection to create a new active session switches Dashboard and Toolbox to it, while double-clicking an already connected entry only reselects that session without opening another terminal or SFTP tab; connection configuration data can be imported and exported; context menus can copy the connection name for Copilot prompts, while **Disconnect** requires confirmation. For jump-host or private-network scenarios, configure the relay host as a normal connection, then select it under **Advanced → Jump Host (ProxyJump)** on the target connection; multi-hop nesting (A→B→C) is supported |
 | **Active Sessions** | Current active sessions, with support for disconnecting (with confirmation) / creating a new SSH terminal / opening the SFTP browser / copying the session name; double-click a session to switch both Dashboard and Toolbox to it |
-| **Dashboard** | Displays **CPU / Memory / Network / Disk / System Info** in sections inside a single panel; CPU and memory each have independent sections with 5-minute mini sparkline trends; progress bars change color by threshold (warn ≥75% / crit ≥90%) |
+| **Dashboard** | Displays **CPU / Memory / Network / Disk / System Info** in sections inside a single panel; System Info includes the server's current time, time zone, and a physical-machine / virtual-machine / container environment when it can be identified; CPU and memory each have independent sections with 5-minute mini sparkline trends; progress bars change color by threshold (warn ≥75% / crit ≥90%) |
 | **Toolbox** | Card-style unified entry point that organizes all feature panels below into two major groups (related to active sessions) |
 | **Plugin Management** | Global tools entry point, decoupled from the session lifecycle: plugin usage guide / to-do management / operation audit log |
 
@@ -45,7 +45,7 @@ The first-run sidebar layout gives **Connections** and **Active Sessions** compa
 
 | Card | Description |
 |---|---|
-| **Process Management** | List + sort indicators + filtering + 4 detail tabs (Summary / Environment Variables / File Descriptors / Kernel Stack); the details panel can be dragged taller; supports killing processes |
+| **Process Management** | Switch between sortable list, PPID parent-child tree, and role-based categories; category/tree disclosure controls use aligned fixed-width slots, and tree PIDs are left-aligned with consistent hierarchy indentation; one-click filter for explainable sensitive/high-risk heuristics; 5 detail tabs (Summary / Environment Variables / File Descriptors / Ports / Kernel Stack), with PID port/socket association collected only when the Ports tab is opened; supports killing processes with confirmation |
 | **Port Monitor** | Dual-pane layout for listening ports and ESTABLISHED connections, with draggable resizing; columns are sortable, and double-click opens GeoIP details |
 | **Command History** | Aggregates shell / REPL history for the current user (bash / zsh / fish / sh / python / node / mysql / psql / sqlite / redis), sorted by time descending; each row can be copied with one click or sent to the current terminal |
 | **Service Management** | systemd service list (service name / status / startup enabled); click a row to tail the journal below; start / stop / restart / enable / disable all require confirmation |
@@ -53,7 +53,7 @@ The first-run sidebar layout gives **Connections** and **Active Sessions** compa
 | **Security Audit** | Five tabs: currently online (who/w), login history (`last`), failed attempts (`lastb`), sshd failure logs (`auth.log`/`journalctl`), and users & groups |
 | **Software & Environment** | Four tabs: installed packages (with search), repository sources (apt/yum/apk/pacman), environment variables, and PATH commands (scanned on demand) |
 | **Container Management** | Unified API for docker / podman; lists all containers (including stopped ones) + port mappings; details show state/ports/mounts/networks/env; copy the full container ID with one click, and open the mounted host directory directly in SFTP; Start/Stop/Restart plus tail 200 logs; compatible with podman output that emulates the docker CLI |
-| **Firewall Management** | **Overview**: detect and display installation and runtime state for iptables / ip6tables / nftables / ufw / firewalld / Fail2Ban; supports service start/stop control. **iptables / ip6tables**: switch table (`filter`/`nat`/`mangle`/`raw`) and chain; rule table; high-risk rules (full-range ACCEPT) highlighted in red and medium-risk ones in orange. **nftables**: raw ruleset output with risk highlighting. **ufw**: numbered rule table + add / delete rule + enable / disable. **firewalld**: zone list + service control + permanent reload. **Fail2Ban**: jail status + banned IP list + one-click unban |
+| **Firewall Management** | **Overview**: detect and display installation and runtime state for iptables / ip6tables / nftables / ufw / firewalld / Fail2Ban; supports service start/stop control. **iptables / ip6tables**: switch table (`filter`/`nat`/`mangle`/`raw`) and chain; rule table; high-risk rules (full-range ACCEPT) highlighted in red and medium-risk ones in orange. **nftables**: raw ruleset output with risk highlighting. **ufw**: numbered rules show IPv4/IPv6 and comments separately; new rules support comments, and add / delete / enable / disable actions require confirmation with a lockout warning before enable. **firewalld**: zone list + service control + permanent reload. **Fail2Ban**: jail status + banned IP list + one-click unban |
 | **Resource Alerts** | Background polling of CPU / memory / disk / load / swap; when thresholds stay exceeded, a notification appears in the lower-right corner (disabled by default, enable via `rss.alerts.enabled`); triple suppression: consecutive trigger count · cooldown time · no more reminders for the day; notifications include a **View Dashboard** quick action |
 | **Dependency Check** | One-click health check for 9 categories of required remote tools such as `ss`/`netstat`/`procps`/`iproute2`, with install commands suggested by distribution |
 
@@ -93,6 +93,7 @@ By default, this extension integrates SSH/SFTP/system capabilities into GitHub C
 | Tool (`#` reference name) | Description |
 |---|---|
 | `#sshListConnections` | List SSH connections, nested group path, primary/alternate addresses, and user-provided internal/external network labels; returns structured expiration status and can proactively remind on approaching expiration (without sensitive fields) |
+| `#findActiveConnections` | Find ready SSH sessions directly by an exact, case-insensitive connection name, server IP, or primary/alternate host address; returns every match with `connectionId` and match reason, so prompts that already identify a server can skip listing all connections |
 | `#sshExec` | Execute commands on a specified connection; commands matching the dangerous-command blacklist are rejected immediately; confirmation dialog is shown by default |
 | `#interactiveStart` / `#interactiveRead` | Start a specific interactive administration tool in a controlled PTY and incrementally read menu / prompt output by cursor |
 | `#interactiveSend` / `#interactiveClose` | After confirmation each time, send one line of non-sensitive input or terminate the interactive session; passwords / passphrases / OTPs are forcibly redirected to a real terminal |
@@ -118,7 +119,7 @@ By default, this extension integrates SSH/SFTP/system capabilities into GitHub C
 ### How to Use
 
 1. Connect to the target host first in the **Connections** panel.
-2. Open Copilot Chat, type `#`, choose `sshExec`, `sftpList`, and so on from the popup tool list; or describe your intent directly and let Copilot choose the tools.
+2. Open Copilot Chat, type `#`, choose `sshExec`, `sftpList`, and so on from the popup tool list; or describe your intent directly and let Copilot choose the tools. When your prompt already includes a connection name or server IP, `#findActiveConnections` can resolve its `connectionId` without first listing every connection.
 3. Destructive operations are intercepted by VS Code's native second-confirmation UI.
 
 ### External MCP Clients
@@ -173,6 +174,7 @@ Copilot will break it down as: `#sshExec backup` → `#sftpUpload jar` → `#sft
 - **GeoIP resolution** is disabled by default. When enabled, only peer public IPs from the ESTABLISHED list are sent to the provider you choose; API keys are stored in SecretStorage.
 - **External MCP access** is disabled by default, and VS Code Copilot defaults to the native tool channel. When MCP is enabled, communication between the extension and the MCP client stays on the local machine; the selected client and its model provider determine where approved tool results are sent.
 - When you invoke a Copilot Chat tool, its result can include connection metadata, remote command output, file or log content, process details, and login records. VS Code passes that result to your selected language-model provider under that provider's privacy terms. The extension does not operate a separate relay or author-owned backend.
+- Process risk filtering runs locally against the already-collected `ps` fields. It is a read-only troubleshooting heuristic with explainable matches, not a malware verdict or a replacement for host EDR; it never terminates a process automatically. PID port association runs only after you explicitly open the Ports detail tab.
 
 ### Import / Export of Configuration
 
@@ -238,8 +240,8 @@ This extension does not install any agent or download any binary to the remote h
 | Establish SSH / SFTP | Regular user | Standard OpenSSH handshake; SFTP subsystem `ls/stat/open/read/write/mkdir/rename/remove` |
 | Copilot controlled interaction | Depends on the confirmed command | Uses SSH PTY to execute the specific administration tool confirmed by the user; every round of non-sensitive input is confirmed separately; no general-purpose shell is exposed and no remote agent is installed |
 | Terminal cwd sync (can be disabled) | Regular user | `PROMPT_COMMAND` / `precmd` injects OSC 7 |
-| Dashboard · System / Network | Regular user read | `uname / uptime`, `/proc/{loadavg,meminfo,cpuinfo,net/dev}`, `df -P`, fallback `ip -s link` and `ifconfig` |
-| Process Management | Regular user read · KILL requires corresponding privilege | `ps -eo …`, `/proc/<pid>/{status,environ,fd,stack}`; KILL always requires explicit confirmation |
+| Dashboard · System / Network | Regular user read | `uname / uptime / date`, `readlink /etc/localtime`, `systemd-detect-virt` (fallbacks: `virt-what`, macOS `sysctl`, Linux DMI), `/proc/{loadavg,meminfo,cpuinfo,net/dev}`, `df -P`, fallback `ip -s link` and `ifconfig` |
+| Process Management | Regular user read · KILL requires corresponding privilege | `ps -eo …`, `/proc/<pid>/{status,environ,fd,stack}`; opening the Ports tab runs PID-scoped `lsof -a -p <pid> -iTCP -iUDP`, with `ss -tunap` / `netstat -tunap` fallback; KILL always requires explicit confirmation |
 | Port Monitor | Regular user | Prefer `ss -ltnp / -tnp`, fallback `netstat` |
 | Service Management | Start/stop may require sudo | `systemctl list-units / show / status`, `journalctl -u …`; start/stop / enable / disable all require confirmation |
 | Scheduled Tasks | Regular user | `crontab -l`, `cat /etc/crontab /etc/cron.d/*`, `systemctl list-timers`, `atq / at -c`, **no modifications** |
